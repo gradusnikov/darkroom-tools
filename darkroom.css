@@ -148,6 +148,27 @@ tr:nth-child(odd) td {
     background-color: #1e1e1e;
 }
 
+/* Clickable time values in f-stop calculator */
+.time-link {
+    color: #ffab40;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.time-link:hover {
+    color: #ff5722;
+    text-decoration: underline;
+}
+
+.instruction {
+    font-style: italic;
+    color: #bdbdbd;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
 /* Fieldset styles for exposure calculator */
 fieldset {
     border: 1px solid #ffab40;

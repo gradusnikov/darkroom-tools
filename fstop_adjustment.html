@@ -17,9 +17,28 @@
         function calculateIncrement(ev, fStopStep, baseTime) {
             return calculateTime(ev, fStopStep, baseTime) - calculateTime(ev - 1, fStopStep, baseTime);
         }
+        
+        function formatFractionalStop(ev, fStopStep) {
+            // For whole stops, just return the EV
+            if (fStopStep === 1) {
+                return ev.toString();
+            }
+            
+            // For fractional stops, format as fractions
+            const numerator = Math.round(ev * (1/fStopStep));
+            const denominator = Math.round(1/fStopStep);
+            
+            return `${numerator}/${denominator}`;
+        }
+        
+        function setNewBaseTime(time) {
+            document.getElementById('baseTime').value = time;
+            calculateExposure();
+        }
 
         function calculateExposure() {
-            const fStopStep = fStopSteps[document.getElementById('fstopStep').value];
+            const fStopStepIndex = document.getElementById('fstopStep').value;
+            const fStopStep = fStopSteps[fStopStepIndex];
             const baseTime = parseFloat(document.getElementById('baseTime').value);
             const dryDown = parseFloat(document.getElementById('dryDown').value);
 
@@ -27,20 +46,25 @@
 
             let result = [];
             EV.forEach(ev => {
+                const exposureTime = calculateTime(ev, fStopStep, adjustedTime);
+                const increment = ev === EV[0] ? exposureTime : calculateIncrement(ev, fStopStep, adjustedTime);
+                
                 let row = [
                     ev,
-                    ev * fStopStep,
-                    calculateTime(ev, fStopStep, adjustedTime),
-                    ev === EV[0] ? calculateTime(ev, fStopStep, adjustedTime) : calculateIncrement(ev, fStopStep, adjustedTime)
+                    formatFractionalStop(ev, fStopStep),
+                    exposureTime,
+                    increment
                 ];
                 result.push(row);
             });
 
-            let table = "<table><thead><tr><th>EV</th><th>Time</th><th>Increment</th></tr></thead><tbody>";
+            let table = "<table><thead><tr><th>EV</th><th>Stop</th><th>Time</th><th>Increment</th></tr></thead><tbody>";
             result.forEach(row => {
+                const timeFormatted = row[2].toFixed(2);
                 table += `<tr>
                     <td>${row[0]}</td>
-                    <td>${row[2].toFixed(2)}</td>
+                    <td>${row[1]}</td>
+                    <td><a href="#" onclick="setNewBaseTime(${row[2]}); return false;" title="Set as new base time" class="time-link">${timeFormatted}</a></td>
                     <td>${row[3].toFixed(2)}</td>
                 </tr>`;
             });
@@ -71,7 +95,9 @@
     </select><br><br>
 
     <label for="baseTime">Base Exposure Time:</label>
-    <input type="number" id="baseTime" value="10" onchange="calculateExposure()"><br><br>
+    <input type="number" id="baseTime" value="10" onchange="calculateExposure()"><br>
+
+    <p class="instruction">Click on any time value to set it as the new base exposure time.</p>
 
     <p id="result"></p>
 </body>
