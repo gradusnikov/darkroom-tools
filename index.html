@@ -5,66 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Darkroom Tools</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-
-        h1 {
-            text-align: center;
-            color: #ff5722;
-        }
-
-        .tools-container {
-            margin-top: 30px;
-        }
-
-        .tool-card {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #555;
-            transition: transform 0.3s ease;
-        }
-
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
-        }
-
-        .tool-card h2 {
-            color: #ffab40;
-            margin-top: 0;
-        }
-
-        .tool-card p {
-            color: #bdbdbd;
-            margin-bottom: 15px;
-        }
-
-        .tool-card a {
-            display: inline-block;
-            background-color: #ff5722;
-            color: #fff;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-
-        .tool-card a:hover {
-            background-color: #e64a19;
-        }
-    </style>
+    <link rel="stylesheet" href="darkroom.css">
 </head>
 <body>
     <h1>Darkroom Tools</h1>
@@ -80,6 +21,12 @@
             <h2>F-stop Calculator</h2>
             <p>Calculate exposure times using the f-stop timing system for precise darkroom printing.</p>
             <a href="fstop_adjustment.html">Open Tool</a>
+        </div>
+        
+        <div class="tool-card">
+            <h2>Opemus Height Adjustment</h2>
+            <p>Calculate exposure time adjustments when changing enlarger height with an Opemus enlarger.</p>
+            <a href="opemus_height_adjustment.html">Open Tool</a>
         </div>
     </div>
 </body>
