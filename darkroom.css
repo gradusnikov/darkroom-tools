@@ -157,3 +157,15 @@ fieldset {
 legend {
     color: #ffab40;
 }
+
+/* Paper selector styles */
+.paper-selector {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.paper-selector select {
+    width: auto;
+    margin: 0 auto;
+    padding: 8px 15px;
+}
