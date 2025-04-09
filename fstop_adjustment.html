@@ -19,20 +19,27 @@
         }
         
         function formatFractionalStop(ev, fStopStep) {
-            // For whole stops, just return the EV
+            // For whole stops (step = 1), just show the EV value
             if (fStopStep === 1) {
                 return ev.toString();
             }
             
-            // For fractional stops, format as fractions
-            const numerator = Math.round(ev * (1/fStopStep));
+            // Calculate the denominator based on step size (e.g., 1/3 step = denominator 3)
             const denominator = Math.round(1/fStopStep);
             
-            return `${numerator}/${denominator}`;
+            // Special case for zero
+            if (ev === 0) {
+                return "0";
+            }
+            
+            // Simply format as ev/denominator
+            return `${ev}/${denominator}`;
         }
         
         function setNewBaseTime(time) {
-            document.getElementById('baseTime').value = time;
+            // Format the time with 2 decimal places for display
+            const formattedTime = Number.isInteger(time) ? time : time.toFixed(2);
+            document.getElementById('baseTime').value = formattedTime;
             calculateExposure();
         }
 
@@ -58,14 +65,29 @@
                 result.push(row);
             });
 
-            let table = "<table><thead><tr><th>EV</th><th>Stop</th><th>Time</th><th>Increment</th></tr></thead><tbody>";
+            let table = "<table><thead><tr><th>f-Stop</th><th>Time</th><th>Increment</th></tr></thead><tbody>";
             result.forEach(row => {
-                const timeFormatted = row[2].toFixed(2);
+                // Format time with 2 significant digits for fractions
+                let timeFormatted;
+                const timeValue = row[2];
+                
+                if (Number.isInteger(timeValue)) {
+                    // For whole numbers, no decimal places
+                    timeFormatted = timeValue.toString();
+                } else {
+                    // For fractional values, limit to 2 significant digits
+                    const decimalPart = timeValue - Math.floor(timeValue);
+                    if (decimalPart === 0) {
+                        timeFormatted = Math.floor(timeValue).toString();
+                    } else {
+                        // Format with 2 decimal places
+                        timeFormatted = timeValue.toFixed(2);
+                    }
+                }
                 table += `<tr>
-                    <td>${row[0]}</td>
                     <td>${row[1]}</td>
                     <td><a href="#" onclick="setNewBaseTime(${row[2]}); return false;" title="Set as new base time" class="time-link">${timeFormatted}</a></td>
-                    <td>${row[3].toFixed(2)}</td>
+                    <td>${Number.isInteger(row[3]) ? row[3].toString() : row[3].toFixed(2)}</td>
                 </tr>`;
             });
             table += "</tbody></table>";
