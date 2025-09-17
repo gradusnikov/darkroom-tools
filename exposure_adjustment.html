@@ -8,6 +8,85 @@
     <link rel="stylesheet" href="darkroom.css">
     <script>
 
+        // F-stop calculation and rounding functions
+        const FSTOP_STEPS = [1, 1/2, 1/3, 1/4, 1/6, 1/12, 1/24];
+        
+        function calculateFStops(timeRatio) {
+            // Calculate f-stops from time ratio: f-stops = log2(timeRatio)
+            return Math.log2(timeRatio);
+        }
+        
+        function roundToNearestFStop(fStops) {
+            const absFStops = Math.abs(fStops);
+            let bestMatch = { value: absFStops, step: 1, multiplier: absFStops };
+            let smallestDiff = Infinity;
+            
+            // Try each step size and find the best multiple
+            for (let step of FSTOP_STEPS) {
+                const multiplier = Math.round(absFStops / step);
+                const roundedValue = multiplier * step;
+                const diff = Math.abs(absFStops - roundedValue);
+                
+                if (diff < smallestDiff) {
+                    smallestDiff = diff;
+                    bestMatch = { value: roundedValue, step: step, multiplier: multiplier };
+                }
+            }
+            
+            // Return with proper sign
+            return fStops >= 0 ? bestMatch.value : -bestMatch.value;
+        }
+        
+        function formatFStops(fStops) {
+            const sign = fStops >= 0 ? '+' : '';
+            const absFStops = Math.abs(fStops);
+            
+            // Find the best step representation
+            let bestRepresentation = null;
+            let smallestDiff = Infinity;
+            
+            for (let step of FSTOP_STEPS) {
+                const multiplier = Math.round(absFStops / step);
+                const reconstructed = multiplier * step;
+                const diff = Math.abs(absFStops - reconstructed);
+                
+                if (diff < smallestDiff && multiplier > 0) {
+                    smallestDiff = diff;
+                    bestRepresentation = { step, multiplier, reconstructed };
+                }
+            }
+            
+            if (bestRepresentation && smallestDiff < 0.001) {
+                const { step, multiplier } = bestRepresentation;
+                
+                if (step === 1) {
+                    // Whole f-stops
+                    return `${sign}${multiplier} f-stop${multiplier !== 1 ? 's' : ''}`;
+                } else {
+                    // Fractional f-stops
+                    const denominator = Math.round(1/step);
+                    if (multiplier === 1) {
+                        return `${sign}1/${denominator} f-stop`;
+                    } else {
+                        // Simplify fraction if possible
+                        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                        const divisor = gcd(multiplier, denominator);
+                        const simplifiedNum = multiplier / divisor;
+                        const simplifiedDen = denominator / divisor;
+                        
+                        if (simplifiedDen === 1) {
+                            return `${sign}${simplifiedNum} f-stop${simplifiedNum !== 1 ? 's' : ''}`;
+                        } else {
+                            return `${sign}${simplifiedNum}/${simplifiedDen} f-stop`;
+                        }
+                    }
+                }
+            }
+            
+            // Fallback for exact values
+            return `${sign}${absFStops.toFixed(3)} f-stops`;
+        }
+
         const FILTER_SETTINGS = {
             foma: {
                 "0": { Y: 60, M: 0, C: 0 },
@@ -93,8 +172,17 @@
             const kC_new = interpolate(filteringFactors, updatedSettings[2], 2);
 
             const updatedTime = existingTime * (kY_new / kY_old) * (kM_new / kM_old) * (kC_new / kC_old);
+            
+            // Calculate f-stop adjustment
+            const timeRatio = updatedTime / existingTime;
+            const fStopsRaw = calculateFStops(timeRatio);
+            const fStopsRounded = roundToNearestFStop(fStopsRaw);
+            const fStopDisplay = formatFStops(fStopsRounded);
 
-            document.getElementById('result').innerText = `Updated Exposure Time: ${updatedTime.toFixed(2)} seconds`;
+            document.getElementById('result').innerHTML = `
+                Updated Exposure Time: <strong style="color: #ffab40;">${updatedTime.toFixed(2)} seconds</strong><br>
+                Adjustment: <strong style="color: #ffab40;">${fStopDisplay}</strong>
+            `;
         }
         
         function setFilterSettings(elementId) {
