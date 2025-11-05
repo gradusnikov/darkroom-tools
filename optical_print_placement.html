@@ -346,17 +346,17 @@
                 let drawWidth, drawHeight, drawX, drawY;
 
                 if (imgAspect > printAspect) {
-                    // Image is wider - fit to width
+                    // Image is wider - fit to width, align to top
                     drawWidth = printW;
                     drawHeight = printW / imgAspect;
                     drawX = printX;
-                    drawY = printY + (printH - drawHeight) / 2;
+                    drawY = printY;  // Align to top
                 } else {
-                    // Image is taller - fit to height
+                    // Image is taller - fit to height, center horizontally
                     drawHeight = printH;
                     drawWidth = printH * imgAspect;
-                    drawX = printX + (printW - drawWidth) / 2;
-                    drawY = printY;
+                    drawX = printX + (printW - drawWidth) / 2;  // Center horizontally
+                    drawY = printY;  // Align to top
                 }
 
                 ctx.drawImage(previewImage, drawX, drawY, drawWidth, drawHeight);
