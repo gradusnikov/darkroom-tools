@@ -36,6 +36,12 @@
             border-radius: 4px;
             max-width: 100%;
             height: auto;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        canvas.drag-over {
+            border-color: #ff5722;
+            box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
         }
 
         .checkbox-group {
@@ -136,7 +142,16 @@
             <label for="printHeight" id="printHeightLabel">Print Height (mm):</label>
             <input type="number" id="printHeight" value="300" min="0.01" step="any">
 
+            <label for="verticalOffset" id="verticalOffsetLabel">Vertical Offset (mm):</label>
+            <input type="number" id="verticalOffset" value="0" step="any">
+            <p style="font-size: 0.85em; color: #bdbdbd; font-style: italic; margin-top: 5px;">Positive moves up, negative moves down</p>
+
             <button id="flipBtn">↔ Flip Orientation</button>
+
+            <label for="imageUpload">Preview Image (optional):</label>
+            <input type="file" id="imageUpload" accept="image/*">
+            <button id="clearImageBtn" style="display: none; margin-top: 5px;">Clear Image</button>
+            <p style="font-size: 0.85em; color: #bdbdbd; font-style: italic; margin-top: 5px;">You can also drag & drop an image onto the canvas</p>
 
             <div class="checkbox-group">
                 <input type="checkbox" id="showCenter">
@@ -160,6 +175,7 @@
 
     <script>
         const MM_PER_INCH = 25.4;
+        let previewImage = null;
 
         function getUnit() {
             return document.querySelector('input[name="unit"]:checked').value;
@@ -187,37 +203,62 @@
             document.getElementById('mountHeightLabel').textContent = `Mount Height (${unit}):`;
             document.getElementById('printWidthLabel').textContent = `Print Width (${unit}):`;
             document.getElementById('printHeightLabel').textContent = `Print Height (${unit}):`;
+            document.getElementById('verticalOffsetLabel').textContent = `Vertical Offset (${unit}):`;
         }
 
         function storeValueInMm(inputId) {
             const input = document.getElementById(inputId);
             const value = parseFloat(input.value);
-            if (!isNaN(value) && value > 0) {
+            // Allow zero and negative values for offset
+            if (!isNaN(value) && (value > 0 || inputId === 'verticalOffset')) {
                 const mmValue = toMm(value);
                 input.dataset.mmValue = mmValue;
             }
         }
 
         function convertInputValues(toUnit) {
-            const fields = ['mountWidth', 'mountHeight', 'printWidth', 'printHeight'];
+            const fields = ['mountWidth', 'mountHeight', 'printWidth', 'printHeight', 'verticalOffset'];
             fields.forEach(id => {
                 const input = document.getElementById(id);
                 const mmValue = parseFloat(input.dataset.mmValue);
-                if (!isNaN(mmValue) && mmValue > 0) {
+                if (!isNaN(mmValue)) {
                     if (toUnit === 'in') {
                         input.value = (mmValue / MM_PER_INCH).toFixed(3);
                     } else {
-                        input.value = Math.round(mmValue);
+                        input.value = id === 'verticalOffset' ? mmValue.toFixed(1) : Math.round(mmValue);
                     }
                 }
             });
         }
 
         function initializeStoredValues() {
-            const fields = ['mountWidth', 'mountHeight', 'printWidth', 'printHeight'];
+            const fields = ['mountWidth', 'mountHeight', 'printWidth', 'printHeight', 'verticalOffset'];
             fields.forEach(id => {
                 storeValueInMm(id);
             });
+        }
+
+        function loadImage(file) {
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    previewImage = img;
+                    document.getElementById('clearImageBtn').style.display = 'block';
+                    draw();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImage() {
+            previewImage = null;
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('clearImageBtn').style.display = 'none';
+            draw();
         }
 
         function draw() {
@@ -226,6 +267,8 @@
             const My = toMm(parseFloat(document.getElementById('mountHeight').value));
             const Px = toMm(parseFloat(document.getElementById('printWidth').value));
             const Py = toMm(parseFloat(document.getElementById('printHeight').value));
+            const offsetInput = parseFloat(document.getElementById('verticalOffset').value);
+            const verticalOffset = toMm(isNaN(offsetInput) ? 0 : offsetInput);
             const showCenter = document.getElementById('showCenter').checked;
             const showMarks = document.getElementById('showMarks').checked;
 
@@ -248,7 +291,10 @@
             const x = Math.round((Mx - Px) / 2);
 
             // Vertical: optical center (slightly higher than geometric center)
-            const y = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+            const baseY = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+
+            // Apply vertical offset (positive moves up, negative moves down)
+            const y = baseY - verticalOffset;
 
             // Calculate margins
             const leftMargin = x;
@@ -291,11 +337,41 @@
             // Draw optical placement (main visualization)
             const printX = offsetX + x * scale;
             const printY = offsetY + y * scale;
-            ctx.fillStyle = 'rgba(255, 171, 64, 0.7)';
-            ctx.fillRect(printX, printY, printW, printH);
-            ctx.strokeStyle = '#ff5722';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(printX, printY, printW, printH);
+
+            // Draw preview image if loaded
+            if (previewImage) {
+                // Calculate scaling to fit image within print area while maintaining aspect ratio
+                const imgAspect = previewImage.width / previewImage.height;
+                const printAspect = printW / printH;
+                let drawWidth, drawHeight, drawX, drawY;
+
+                if (imgAspect > printAspect) {
+                    // Image is wider - fit to width
+                    drawWidth = printW;
+                    drawHeight = printW / imgAspect;
+                    drawX = printX;
+                    drawY = printY + (printH - drawHeight) / 2;
+                } else {
+                    // Image is taller - fit to height
+                    drawHeight = printH;
+                    drawWidth = printH * imgAspect;
+                    drawX = printX + (printW - drawWidth) / 2;
+                    drawY = printY;
+                }
+
+                ctx.drawImage(previewImage, drawX, drawY, drawWidth, drawHeight);
+            } else {
+                // No image - show colored background
+                ctx.fillStyle = 'rgba(255, 171, 64, 0.7)';
+                ctx.fillRect(printX, printY, printW, printH);
+            }
+
+            // Draw print border (only if no image OR if marks are shown)
+            if (!previewImage || showMarks) {
+                ctx.strokeStyle = '#ff5722';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(printX, printY, printW, printH);
+            }
 
             // Draw geometric center placement (optional overlay)
             if (showCenter) {
@@ -307,10 +383,12 @@
                 ctx.strokeRect(cprintX, cprintY, printW, printH);
                 ctx.setLineDash([]);
 
-                // Label for geometric center
-                ctx.fillStyle = '#2196F3';
-                ctx.font = 'bold 12px Arial';
-                ctx.fillText('Geometric', cprintX + 5, cprintY + 15);
+                // Label for geometric center (only if no image OR if marks are shown)
+                if (!previewImage || showMarks) {
+                    ctx.fillStyle = '#2196F3';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText('Geometric', cprintX + 5, cprintY + 15);
+                }
             }
 
             // Draw measurement marks and labels
@@ -372,15 +450,22 @@
                 ctx.fill();
             }
 
-            // Add label for optical placement
-            ctx.fillStyle = '#ff5722';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText('Optical Center', printX + 5, printY + 15);
+            // Add label for optical placement (only if no image OR if marks are shown)
+            if (!previewImage || showMarks) {
+                ctx.fillStyle = '#ff5722';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText('Optical Center', printX + 5, printY + 15);
+            }
 
             // Display numeric results
             const difference = bottomMargin - topMargin;
+            let offsetInfo = '';
+            if (verticalOffset !== 0) {
+                offsetInfo = `<strong>Custom offset applied:</strong> ${formatValue(fromMm(verticalOffset))} ${verticalOffset > 0 ? 'up' : 'down'}<br><br>`;
+            }
             document.getElementById('results').innerHTML = `
                 <div class="section-title">Optical Placement</div>
+                ${offsetInfo}
                 <strong>Left offset:</strong> ${formatValue(fromMm(leftMargin))}<br>
                 <strong>Right offset:</strong> ${formatValue(fromMm(rightMargin))}<br>
                 <strong>Top offset:</strong> ${formatValue(fromMm(topMargin))}<br>
@@ -425,6 +510,48 @@
         document.getElementById('flipBtn').addEventListener('click', flipOrientation);
         document.getElementById('showCenter').addEventListener('change', draw);
         document.getElementById('showMarks').addEventListener('change', draw);
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                loadImage(e.target.files[0]);
+            }
+        });
+        document.getElementById('clearImageBtn').addEventListener('click', clearImage);
+
+        // Drag and drop event listeners for canvas
+        const canvas = document.getElementById('mountCanvas');
+
+        canvas.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            canvas.classList.add('drag-over');
+        });
+
+        canvas.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            canvas.classList.add('drag-over');
+        });
+
+        canvas.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            canvas.classList.remove('drag-over');
+        });
+
+        canvas.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            canvas.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                // Check if it's an image file
+                if (file.type.startsWith('image/')) {
+                    loadImage(file);
+                }
+            }
+        });
 
         // Unit toggle event listener
         document.querySelectorAll('input[name="unit"]').forEach(radio => {
@@ -437,7 +564,7 @@
         });
 
         // Auto-update on input change
-        ['mountWidth', 'mountHeight', 'printWidth', 'printHeight'].forEach(id => {
+        ['mountWidth', 'mountHeight', 'printWidth', 'printHeight', 'verticalOffset'].forEach(id => {
             document.getElementById(id).addEventListener('input', function() {
                 storeValueInMm(id);
                 draw();
