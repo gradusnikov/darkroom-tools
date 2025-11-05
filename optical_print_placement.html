@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Print Placement Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="darkroom.css">
+    <style>
+        body {
+            max-width: 1200px;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .canvas-container {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        canvas {
+            border: 1px solid #555;
+            background: #2a2a2a;
+            display: block;
+            margin-top: 10px;
+            border-radius: 4px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .checkbox-group label {
+            margin-top: 0;
+            font-weight: normal;
+            display: inline;
+        }
+
+        .results-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #555;
+            line-height: 1.6;
+        }
+
+        .results-box strong {
+            color: #ffab40;
+        }
+
+        .section-title {
+            color: #ff5722;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .instruction-text {
+            font-style: italic;
+            color: #bdbdbd;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Optical Print Placement Calculator</h1>
+    <div class="nav-link"><a href="index.html">← Back to tools</a></div>
+
+    <p class="instruction-text">Calculate optimal print placement on a mount using optical centering. Optical centering places the print slightly higher than geometric center for a more balanced appearance.</p>
+
+    <div class="container">
+        <div class="controls">
+            <label for="mountWidth">Mount Width (mm):</label>
+            <input type="number" id="mountWidth" value="400" min="1" step="1">
+
+            <label for="mountHeight">Mount Height (mm):</label>
+            <input type="number" id="mountHeight" value="500" min="1" step="1">
+
+            <label for="printWidth">Print Width (mm):</label>
+            <input type="number" id="printWidth" value="200" min="1" step="1">
+
+            <label for="printHeight">Print Height (mm):</label>
+            <input type="number" id="printHeight" value="300" min="1" step="1">
+
+            <button id="flipBtn">↔ Flip Orientation</button>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="showCenter">
+                <label for="showCenter">Show Geometric Center (for comparison)</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="showMarks" checked>
+                <label for="showMarks">Show measurement marks</label>
+            </div>
+
+            <button id="goBtn" style="display: none">Calculate & Visualize</button>
+
+            <div id="results" class="results-box"></div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="mountCanvas" width="800" height="700"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function draw() {
+            const Mx = parseFloat(document.getElementById('mountWidth').value);
+            const My = parseFloat(document.getElementById('mountHeight').value);
+            const Px = parseFloat(document.getElementById('printWidth').value);
+            const Py = parseFloat(document.getElementById('printHeight').value);
+            const showCenter = document.getElementById('showCenter').checked;
+            const showMarks = document.getElementById('showMarks').checked;
+
+            // Validate inputs
+            if (isNaN(Mx) || isNaN(My) || isNaN(Px) || isNaN(Py) ||
+                Mx <= 0 || My <= 0 || Px <= 0 || Py <= 0) {
+                document.getElementById('results').innerHTML =
+                    '<span style="color: #ff5722;">Please enter valid positive dimensions.</span>';
+                return;
+            }
+
+            if (Px >= Mx || Py >= My) {
+                document.getElementById('results').innerHTML =
+                    '<span style="color: #ff5722;">Print dimensions must be smaller than mount dimensions.</span>';
+                return;
+            }
+
+            // Optical placement formulas
+            // Horizontal: centered (equal left and right margins)
+            const x = Math.round((Mx - Px) / 2);
+
+            // Vertical: optical center (slightly higher than geometric center)
+            const y = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+
+            // Calculate margins
+            const leftMargin = x;
+            const rightMargin = Mx - Px - x;
+            const topMargin = y;
+            const bottomMargin = My - Py - y;
+
+            // Geometric center placement (for comparison)
+            const cx = (Mx - Px) / 2;
+            const cy = (My - Py) / 2;
+
+            // Prepare canvas scaling
+            const canvas = document.getElementById('mountCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Scale to fit with padding
+            const padTop = 60;
+            const padBottom = 100;  // Extra padding at bottom for labels
+            const padLeft = 100;
+            const padRight = 150;  // Extra padding on right for labels
+            const availW = canvas.width - padLeft - padRight;
+            const availH = canvas.height - padTop - padBottom;
+            const scale = Math.min(availW / Mx, availH / My);
+            const mountW = Mx * scale;
+            const mountH = My * scale;
+            const printW = Px * scale;
+            const printH = Py * scale;
+
+            const offsetX = padLeft + (availW - mountW) / 2;
+            const offsetY = padTop + (availH - mountH) / 2;
+
+            // Draw mount (lighter background)
+            ctx.fillStyle = '#e8e8e8';
+            ctx.fillRect(offsetX, offsetY, mountW, mountH);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(offsetX, offsetY, mountW, mountH);
+
+            // Draw optical placement (main visualization)
+            const printX = offsetX + x * scale;
+            const printY = offsetY + y * scale;
+            ctx.fillStyle = 'rgba(255, 171, 64, 0.7)';
+            ctx.fillRect(printX, printY, printW, printH);
+            ctx.strokeStyle = '#ff5722';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(printX, printY, printW, printH);
+
+            // Draw geometric center placement (optional overlay)
+            if (showCenter) {
+                const cprintX = offsetX + cx * scale;
+                const cprintY = offsetY + cy * scale;
+                ctx.strokeStyle = '#2196F3';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 4]);
+                ctx.strokeRect(cprintX, cprintY, printW, printH);
+                ctx.setLineDash([]);
+
+                // Label for geometric center
+                ctx.fillStyle = '#2196F3';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText('Geometric', cprintX + 5, cprintY + 15);
+            }
+
+            // Draw measurement marks and labels
+            if (showMarks) {
+                ctx.strokeStyle = '#666';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 3]);
+
+                // Top margin line
+                ctx.beginPath();
+                ctx.moveTo(offsetX - 10, printY);
+                ctx.lineTo(offsetX + mountW + 10, printY);
+                ctx.stroke();
+
+                // Bottom margin line
+                const bottomLineY = printY + printH;
+                ctx.beginPath();
+                ctx.moveTo(offsetX - 10, bottomLineY);
+                ctx.lineTo(offsetX + mountW + 10, bottomLineY);
+                ctx.stroke();
+
+                // Left margin line
+                ctx.beginPath();
+                ctx.moveTo(printX, offsetY - 10);
+                ctx.lineTo(printX, offsetY + mountH + 10);
+                ctx.stroke();
+
+                // Right margin line
+                const rightLineX = printX + printW;
+                ctx.beginPath();
+                ctx.moveTo(rightLineX, offsetY - 10);
+                ctx.lineTo(rightLineX, offsetY + mountH + 10);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+
+                // Draw dimension labels - vertical (top/bottom)
+                ctx.fillStyle = '#ff5722';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('Top: ' + topMargin.toFixed(0) + ' mm', offsetX + mountW + 15, printY + 5);
+                ctx.fillText('Bottom: ' + bottomMargin.toFixed(0) + ' mm', offsetX + mountW + 15, bottomLineY + 5);
+
+                // Draw dimension labels - horizontal (left/right)
+                // Position labels below the mount to ensure visibility
+                ctx.fillText('Left: ' + leftMargin.toFixed(0) + ' mm', printX + 5, offsetY + mountH + 25);
+                ctx.fillText('Right: ' + rightMargin.toFixed(0) + ' mm', rightLineX - 70, offsetY + mountH + 25);
+
+                // Draw center points
+                // Mount center
+                ctx.fillStyle = '#ff5722';
+                ctx.beginPath();
+                ctx.arc(offsetX + mountW / 2, offsetY + mountH / 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Print center (optical)
+                ctx.fillStyle = '#ffab40';
+                ctx.beginPath();
+                ctx.arc(printX + printW / 2, printY + printH / 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Add label for optical placement
+            ctx.fillStyle = '#ff5722';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('Optical Center', printX + 5, printY + 15);
+
+            // Display numeric results
+            const difference = bottomMargin - topMargin;
+            document.getElementById('results').innerHTML = `
+                <div class="section-title">Optical Placement</div>
+                <strong>Left offset:</strong> ${leftMargin.toFixed(0)} mm<br>
+                <strong>Right offset:</strong> ${rightMargin.toFixed(0)} mm<br>
+                <strong>Top offset:</strong> ${topMargin.toFixed(0)} mm<br>
+                <strong>Bottom offset:</strong> ${bottomMargin.toFixed(0)} mm<br>
+                <strong>Bottom-Top difference:</strong> ${difference.toFixed(0)} mm<br>
+                <br>
+                <div class="section-title">Geometric Center (for comparison)</div>
+                <strong>Left:</strong> ${cx.toFixed(0)} mm<br>
+                <strong>Top:</strong> ${cy.toFixed(0)} mm<br>
+                <strong>Difference:</strong> ${(cy - topMargin).toFixed(1)} mm higher with optical centering
+            `;
+        }
+
+        // Flip orientation function
+        function flipOrientation() {
+            // Swap mount dimensions
+            const mountWidth = document.getElementById('mountWidth');
+            const mountHeight = document.getElementById('mountHeight');
+            const tempMount = mountWidth.value;
+            mountWidth.value = mountHeight.value;
+            mountHeight.value = tempMount;
+
+            // Swap print dimensions
+            const printWidth = document.getElementById('printWidth');
+            const printHeight = document.getElementById('printHeight');
+            const tempPrint = printWidth.value;
+            printWidth.value = printHeight.value;
+            printHeight.value = tempPrint;
+
+            // Redraw with new dimensions
+            draw();
+        }
+
+        // Event listeners
+        document.getElementById('goBtn').addEventListener('click', draw);
+        document.getElementById('flipBtn').addEventListener('click', flipOrientation);
+        document.getElementById('showCenter').addEventListener('change', draw);
+        document.getElementById('showMarks').addEventListener('change', draw);
+
+        // Auto-update on input change
+        ['mountWidth', 'mountHeight', 'printWidth', 'printHeight'].forEach(id => {
+            document.getElementById(id).addEventListener('input', draw);
+        });
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>
