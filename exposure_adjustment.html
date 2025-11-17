@@ -8,6 +8,53 @@
     <link rel="stylesheet" href="darkroom.css">
     <script>
 
+        // Cookie utility functions
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(cookie.substring(nameEQ.length));
+                }
+            }
+            return null;
+        }
+
+        function saveSettings() {
+            const settings = {
+                paperType: PAPER_TYPE,
+                colorHeadType: COLOR_HEAD_TYPE,
+                existingFilterGrade: document.getElementById('existingFilterGrade').value,
+                updatedFilterGrade: document.getElementById('updatedFilterGrade').value,
+                existingY: document.getElementById('existingY').value,
+                existingM: document.getElementById('existingM').value,
+                existingTime: document.getElementById('existingTime').value,
+                updatedY: document.getElementById('updatedY').value,
+                updatedM: document.getElementById('updatedM').value
+            };
+            setCookie('exposureSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const settingsStr = getCookie('exposureSettings');
+            if (settingsStr) {
+                try {
+                    return JSON.parse(settingsStr);
+                } catch (e) {
+                    console.error('Error parsing settings cookie:', e);
+                    return null;
+                }
+            }
+            return null;
+        }
+
         // F-stop calculation and rounding functions
         const FSTOP_STEPS = [1, 1/3, 1/12, 1/24];
         
@@ -112,8 +159,51 @@
                 "5": { Y: 0, M: 150, C: 0 }
             }            
         };
-        
+
         let PAPER_TYPE = "foma"; // Default paper type
+        let COLOR_HEAD_TYPE = "meochrom2"; // Default color head type
+
+        const FILTERING_FACTORS = {
+            "meochrom1" : {
+                0: [1.00, 1.00, 1.00],
+                10: [1.03, 1.10, 1.08],
+                20: [1.06, 1.20, 1.15],
+                30: [1.08, 1.26, 1.21],
+                40: [1.10, 1.33, 1.25],
+                50: [1.12, 1.39, 1.30],
+                60: [1.13, 1.45, 1.34],
+                70: [1.14, 1.50, 1.38],
+                80: [1.15, 1.55, 1.42],
+                90: [1.16, 1.60, 1.46],
+                100: [1.17, 1.66, 1.50],
+                110: [1.18, 1.71, 1.54],
+                120: [1.18, 1.77, 1.57],
+                130: [1.19, 1.82, 1.59],
+                140: [1.19, 1.88, 1.62],
+                150: [1.20, 1.93, 1.65]
+            },
+            "meochrom2" : {
+                0: [1.00, 1.00, 1.00],
+                10: [1.05,1.15,1.09],
+                20: [1.10,1.28,1.17],
+                30: [1.14,1.39,1.24],
+                40: [1.17,1.50,1.30],
+                50: [1.20,1.60,1.36],
+                60: [1.22,1.69,1.41],
+                70: [1.24,1.78,1.46],
+                80: [1.25,1.86,1.51],
+                90: [1.26,1.94,1.56],
+                100: [1.27,2.01,1.60],
+                110: [1.28,2.08,1.64],
+                120: [1.29,2.14,1.68],
+                130: [1.29,2.20,1.72],
+                140: [1.30,2.26,1.75],
+                150: [1.30,2.31,1.78],
+                160: [1.31,2.36,1.81],
+                170: [1.31,2.41,1.84],
+                180: [1.32,2.45,1.86]
+            }
+        };
 
         function interpolate(filteringFactors, value, colorIndex) {
             const keys = Object.keys(filteringFactors).map(Number);
@@ -150,24 +240,8 @@
 
             const existingTime = parseFloat(document.getElementById('existingTime').value);
 
-            const filteringFactors = {
-                0: [1.00, 1.00, 1.00],
-                10: [1.03, 1.10, 1.08],
-                20: [1.06, 1.20, 1.15],
-                30: [1.08, 1.26, 1.21],
-                40: [1.10, 1.33, 1.25],
-                50: [1.12, 1.39, 1.30],
-                60: [1.13, 1.45, 1.34],
-                70: [1.14, 1.50, 1.38],
-                80: [1.15, 1.55, 1.42],
-                90: [1.16, 1.60, 1.46],
-                100: [1.17, 1.66, 1.50],
-                110: [1.18, 1.71, 1.54],
-                120: [1.18, 1.77, 1.57],
-                130: [1.19, 1.82, 1.59],
-                140: [1.19, 1.88, 1.62],
-                150: [1.20, 1.93, 1.65]
-            };
+            // Get the filtering factors for the selected color head type
+            const filteringFactors = FILTERING_FACTORS[COLOR_HEAD_TYPE];
 
             const kY_old = interpolate(filteringFactors, existingSettings[0], 0);
             const kM_old = interpolate(filteringFactors, existingSettings[1], 1);
@@ -204,21 +278,30 @@
                     document.getElementById('updatedM').value = filterSettings[filterGrade].M;
                 }
             }
+            saveSettings();
         }
         
         function changePaperType() {
             PAPER_TYPE = document.getElementById('paperType').value;
-            
+
             // Clear both select elements
             document.getElementById('existingFilterGrade').innerHTML = '';
             document.getElementById('updatedFilterGrade').innerHTML = '';
-            
+
             // Reload the filter tables
             loadFilterTables();
-            
+
             // Reset the values
             setFilterSettings('existingFilterGrade');
             setFilterSettings('updatedFilterGrade');
+
+            // Save settings
+            saveSettings();
+        }
+
+        function changeColorHeadType() {
+            COLOR_HEAD_TYPE = document.getElementById('colorHeadType').value;
+            saveSettings();
         }
         
         function loadFilterTables() {
@@ -248,9 +331,48 @@
         }
         
         window.onload = () => {
+            // Try to load saved settings
+            const savedSettings = loadSettings();
+
+            if (savedSettings) {
+                // Restore paper type and color head type
+                if (savedSettings.paperType) {
+                    PAPER_TYPE = savedSettings.paperType;
+                    document.getElementById('paperType').value = savedSettings.paperType;
+                }
+                if (savedSettings.colorHeadType) {
+                    COLOR_HEAD_TYPE = savedSettings.colorHeadType;
+                    document.getElementById('colorHeadType').value = savedSettings.colorHeadType;
+                }
+            }
+
             loadFilterTables();
-            setFilterSettings('existingFilterGrade');
-            setFilterSettings('updatedFilterGrade');
+
+            if (savedSettings) {
+                // Restore filter grades
+                if (savedSettings.existingFilterGrade) {
+                    document.getElementById('existingFilterGrade').value = savedSettings.existingFilterGrade;
+                }
+                if (savedSettings.updatedFilterGrade) {
+                    document.getElementById('updatedFilterGrade').value = savedSettings.updatedFilterGrade;
+                }
+
+                // Restore input values
+                if (savedSettings.existingY) document.getElementById('existingY').value = savedSettings.existingY;
+                if (savedSettings.existingM) document.getElementById('existingM').value = savedSettings.existingM;
+                if (savedSettings.existingTime) document.getElementById('existingTime').value = savedSettings.existingTime;
+                if (savedSettings.updatedY) document.getElementById('updatedY').value = savedSettings.updatedY;
+                if (savedSettings.updatedM) document.getElementById('updatedM').value = savedSettings.updatedM;
+            } else {
+                // No saved settings, use defaults
+                setFilterSettings('existingFilterGrade');
+                setFilterSettings('updatedFilterGrade');
+            }
+
+            // Add event listeners to save settings when inputs change
+            ['existingY', 'existingM', 'existingTime', 'updatedY', 'updatedM'].forEach(id => {
+                document.getElementById(id).addEventListener('input', saveSettings);
+            });
         };
 
     </script>
@@ -264,6 +386,14 @@
         <select id="paperType" onchange="changePaperType()">
             <option value="foma">Foma</option>
             <option value="ilford">Ilford</option>
+        </select>
+    </div>
+
+    <div class="paper-selector">
+        <label for="colorHeadType">Color Head Type:</label>
+        <select id="colorHeadType" onchange="changeColorHeadType()">
+            <option value="meochrom1">Meochrom 1</option>
+            <option value="meochrom2" selected>Meochrom 2</option>
         </select>
     </div>
 
