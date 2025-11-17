@@ -177,6 +177,67 @@
         const MM_PER_INCH = 25.4;
         let previewImage = null;
 
+        // Cookie functions
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function saveSettings() {
+            const settings = {
+                unit: getUnit(),
+                mountWidth: document.getElementById('mountWidth').value,
+                mountHeight: document.getElementById('mountHeight').value,
+                printWidth: document.getElementById('printWidth').value,
+                printHeight: document.getElementById('printHeight').value,
+                verticalOffset: document.getElementById('verticalOffset').value,
+                showCenter: document.getElementById('showCenter').checked,
+                showMarks: document.getElementById('showMarks').checked
+            };
+            setCookie('opticalPlacementSettings', JSON.stringify(settings), 365);
+        }
+
+        function loadSettings() {
+            const settingsStr = getCookie('opticalPlacementSettings');
+            if (settingsStr) {
+                try {
+                    const settings = JSON.parse(settingsStr);
+
+                    // Restore unit
+                    if (settings.unit) {
+                        document.querySelectorAll('input[name="unit"]').forEach(radio => {
+                            radio.checked = radio.value === settings.unit;
+                        });
+                    }
+
+                    // Restore input values
+                    if (settings.mountWidth) document.getElementById('mountWidth').value = settings.mountWidth;
+                    if (settings.mountHeight) document.getElementById('mountHeight').value = settings.mountHeight;
+                    if (settings.printWidth) document.getElementById('printWidth').value = settings.printWidth;
+                    if (settings.printHeight) document.getElementById('printHeight').value = settings.printHeight;
+                    if (settings.verticalOffset !== undefined) document.getElementById('verticalOffset').value = settings.verticalOffset;
+
+                    // Restore checkboxes
+                    if (settings.showCenter !== undefined) document.getElementById('showCenter').checked = settings.showCenter;
+                    if (settings.showMarks !== undefined) document.getElementById('showMarks').checked = settings.showMarks;
+                } catch (e) {
+                    console.error('Error loading settings:', e);
+                }
+            }
+        }
+
         function getUnit() {
             return document.querySelector('input[name="unit"]:checked').value;
         }
@@ -262,6 +323,8 @@
         }
 
         function draw() {
+            saveSettings();
+
             // Get input values and convert to mm for calculations
             const Mx = toMm(parseFloat(document.getElementById('mountWidth').value));
             const My = toMm(parseFloat(document.getElementById('mountHeight').value));
@@ -572,6 +635,7 @@
         });
 
         // Initial setup
+        loadSettings();
         initializeStoredValues();
         updateLabels();
         draw();
