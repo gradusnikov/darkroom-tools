@@ -3,98 +3,183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Opemus Exposure Scaling Tool</title>
+  <title>Enlarger Exposure Calculator</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="darkroom.css">
+  <style>
+    .unit-toggle {
+      display: flex;
+      gap: 15px;
+      margin: 15px 0;
+      align-items: center;
+      justify-content: center;
+    }
+    .unit-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin: 0;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <h1>Opemus Exposure Scaling Tool</h1>
+  <h1>Enlarger Exposure Calculator</h1>
   <div class="nav-link"><a href="index.html">← Back to tools</a></div>
-  
-  <label for="initialHeight">Initial Position Indicator:</label>
-  <input type="number" id="initialHeight" min="10" max="60" step="0.1">
 
-  <label for="targetHeight">Target Position Indicator:</label>
-  <input type="number" id="targetHeight" min="10" max="60" step="0.1">
+  <div class="unit-toggle">
+    <label>
+      <input type="radio" name="unit" value="inches" id="inchesRadio" checked onchange="setUnit('inches')">
+      Inches
+    </label>
+    <label>
+      <input type="radio" name="unit" value="cm" id="cmRadio" onchange="setUnit('cm')">
+      Centimeters
+    </label>
+  </div>
+
+  <label for="negativeType">Negative Type:</label>
+  <select id="negativeType" onchange="saveSettings()">
+    <option value="35mm">35mm</option>
+    <option value="6x6">6x6 120mm</option>
+  </select>
+
+  <label for="initialWidth">Initial Print Width:</label>
+  <input type="number" id="initialWidth" step="0.1" placeholder="Enter initial width" onchange="saveSettings()">
+
+  <label for="targetWidth">Target Print Width:</label>
+  <input type="number" id="targetWidth" step="0.1" placeholder="Enter target width" onchange="saveSettings()">
 
   <label for="initialExposure">Initial Exposure Time (s):</label>
-  <input type="number" id="initialExposure" min="0" step="0.1">
+  <input type="number" id="initialExposure" step="0.1" placeholder="Enter exposure time" onchange="saveSettings()">
 
-  <button onclick="calculateScaleFactor()">Calculate Target Exposure</button>
+  <button onclick="calculateExposure()">Calculate Target Exposure</button>
 
   <p id="result"></p>
 
   <script>
-    const headPositions = [10, 15, 20, 25, 30, 35, 40, 45, 50];
-    // taken from opemus manual
-    const scaleFactorsTo50 = [7.7, 4.93, 3.48, 2.62, 2.07, 1.68, 1.39, 1.17, 1];
-    
-    function computeSplineCoefficients(x, y) {
-      const n = x.length;
-      const a = y.slice();
-      const b = new Array(n - 1);
-      const d = new Array(n - 1);
-      const h = new Array(n - 1);
-      const alpha = new Array(n - 1);
+    // Negative sizes in inches
+    const negativeSizes = {
+      '35mm': 1.42,
+      '6x6': 2.35
+    };
 
-      for (let i = 0; i < n - 1; i++) {
-        h[i] = x[i + 1] - x[i];
-        alpha[i] = (3 / h[i]) * (a[i + 1] - a[i]) - (i > 0 ? (3 / h[i - 1]) * (a[i] - a[i - 1]) : 0);
-      }
+    let currentUnit = 'inches';
 
-      const c = new Array(n).fill(0);
-      const l = new Array(n).fill(1);
-      const mu = new Array(n).fill(0);
-      const z = new Array(n).fill(0);
-
-      for (let i = 1; i < n - 1; i++) {
-        l[i] = 2 * (x[i + 1] - x[i - 1]) - h[i - 1] * mu[i - 1];
-        mu[i] = h[i] / l[i];
-        z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
-      }
-
-      for (let j = n - 2; j >= 0; j--) {
-        c[j] = z[j] - mu[j] * c[j + 1];
-        b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
-        d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
-      }
-
-      return { a, b, c: c.slice(0, n - 1), d, x };
+    // Cookie functions
+    function setCookie(name, value, days) {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
     }
 
-    const spline = computeSplineCoefficients(headPositions, scaleFactorsTo50);
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    }
 
-    function cubicSplineInterpolate(xVal, spline) {
-      const { a, b, c, d, x } = spline;
-      let i = x.length - 2;
-      for (let j = 0; j < x.length - 1; j++) {
-        if (xVal >= x[j] && xVal <= x[j + 1]) {
-          i = j;
-          break;
+    function saveSettings() {
+      const settings = {
+        unit: currentUnit,
+        negativeType: document.getElementById('negativeType').value,
+        initialWidth: document.getElementById('initialWidth').value,
+        targetWidth: document.getElementById('targetWidth').value,
+        initialExposure: document.getElementById('initialExposure').value
+      };
+      setCookie('enlargerCalcSettings', JSON.stringify(settings), 365);
+    }
+
+    function loadSettings() {
+      const settingsStr = getCookie('enlargerCalcSettings');
+      if (settingsStr) {
+        try {
+          const settings = JSON.parse(settingsStr);
+
+          // Restore unit
+          if (settings.unit) {
+            currentUnit = settings.unit;
+            if (settings.unit === 'inches') {
+              document.getElementById('inchesRadio').checked = true;
+            } else {
+              document.getElementById('cmRadio').checked = true;
+            }
+          }
+
+          // Restore negative type
+          if (settings.negativeType) {
+            document.getElementById('negativeType').value = settings.negativeType;
+          }
+
+          // Restore input values
+          if (settings.initialWidth) {
+            document.getElementById('initialWidth').value = settings.initialWidth;
+          }
+          if (settings.targetWidth) {
+            document.getElementById('targetWidth').value = settings.targetWidth;
+          }
+          if (settings.initialExposure) {
+            document.getElementById('initialExposure').value = settings.initialExposure;
+          }
+        } catch (e) {
+          console.error('Error loading settings:', e);
         }
       }
-      const dx = xVal - x[i];
-      return a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
     }
 
-    function calculateScaleFactor() {
-      const initial = parseFloat(document.getElementById("initialHeight").value);
-      const target = parseFloat(document.getElementById("targetHeight").value);
-      const exposure = parseFloat(document.getElementById("initialExposure").value);
+    function setUnit(unit) {
+      currentUnit = unit;
+      saveSettings();
+    }
 
-      if (isNaN(initial) || isNaN(target) || isNaN(exposure)) {
-        document.getElementById("result").innerText = "Please enter valid numeric heights and exposure time.";
+    function calculateExposure() {
+      const initialWidth = parseFloat(document.getElementById('initialWidth').value);
+      const targetWidth = parseFloat(document.getElementById('targetWidth').value);
+      const initialExposure = parseFloat(document.getElementById('initialExposure').value);
+      const negativeType = document.getElementById('negativeType').value;
+
+      if (isNaN(initialWidth) || isNaN(targetWidth) || isNaN(initialExposure)) {
+        document.getElementById('result').innerText = 'Please enter valid numbers for all fields.';
         return;
       }
 
-      const sfInitial = cubicSplineInterpolate(initial, spline);
-      const sfTarget = cubicSplineInterpolate(target, spline);
+      if (initialWidth <= 0 || targetWidth <= 0 || initialExposure <= 0) {
+        document.getElementById('result').innerText = 'All values must be positive.';
+        return;
+      }
 
-      const factor = sfInitial / sfTarget;
-      const targetExposure = (exposure * factor).toFixed(2);
+      // Get negative size in inches
+      let negativeSize = negativeSizes[negativeType];
 
-      document.getElementById("result").innerText = `Scale Factor: ${factor.toFixed(2)}\nTarget Exposure Time: ${targetExposure} s`;
+      // Convert widths to inches if in cm
+      let initialWidthInches = initialWidth;
+      let targetWidthInches = targetWidth;
+
+      if (currentUnit === 'cm') {
+        initialWidthInches = initialWidth / 2.54;
+        targetWidthInches = targetWidth / 2.54;
+      }
+
+      // Calculate magnification ratios
+      const m1 = initialWidthInches / negativeSize;
+      const m2 = targetWidthInches / negativeSize;
+
+      // Calculate new exposure time: t2 = t1 * ((m2 + 1) / (m1 + 1))^2
+      const targetExposure = initialExposure * Math.pow((m2 + 1) / (m1 + 1), 2);
+
+      document.getElementById('result').innerText =
+        `Initial magnification: ${m1.toFixed(2)}×\n` +
+        `Target magnification: ${m2.toFixed(2)}×\n` +
+        `Target Exposure Time: ${targetExposure.toFixed(2)} s`;
     }
+
+    // Load settings on page load
+    window.addEventListener('DOMContentLoaded', loadSettings);
   </script>
 </body>
 </html>
