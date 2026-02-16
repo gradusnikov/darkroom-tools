@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1410"/>
+  <rect x="16" y="16" width="480" height="480" rx="64" fill="none" stroke="#c4713b" stroke-width="2" opacity="0.3"/>
+  <!-- Enlarger column -->
+  <rect x="248" y="72" width="16" height="320" fill="#3d3228" rx="3"/>
+  <!-- Enlarger head -->
+  <rect x="182" y="58" width="148" height="65" rx="10" fill="#2a2218" stroke="#c4713b" stroke-width="2.5"/>
+  <!-- Light cone -->
+  <polygon points="202,123 310,123 370,395 142,395" fill="url(#cone)" opacity="0.15"/>
+  <!-- Baseboard -->
+  <rect x="108" y="395" width="296" height="20" rx="5" fill="#3d3228" stroke="#c4713b" stroke-width="1.5"/>
+  <!-- Paper on baseboard -->
+  <rect x="158" y="380" width="196" height="16" rx="2" fill="#d4c4a8" opacity="0.2"/>
+  <!-- Lens -->
+  <circle cx="256" cy="162" r="18" fill="none" stroke="#c4713b" stroke-width="3"/>
+  <circle cx="256" cy="162" r="7" fill="#c4713b" opacity="0.4"/>
+  <!-- Safelight glow -->
+  <circle cx="420" cy="82" r="9" fill="#c43030" opacity="0.6"/>
+  <circle cx="420" cy="82" r="18" fill="#c43030" opacity="0.1"/>
+  <defs>
+    <linearGradient id="cone" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#c4713b" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#c4713b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
