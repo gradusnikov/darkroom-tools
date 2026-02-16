@@ -995,6 +995,8 @@
                             <option value="2">1/3</option>
                             <option value="3">1/4</option>
                             <option value="4">1/6</option>
+                            <option value="5">1/12</option>
+                            <option value="6">1/24</option>
                         </select>
                     </div>
                     <div class="input-group">
@@ -1643,7 +1645,7 @@
         // TOOL 2: F-STOP TIMING TABLE
         // ================================================================
         (function () {
-            const FSTOP_STEPS = [1, 1 / 2, 1 / 3, 1 / 4, 1 / 6];
+            const FSTOP_STEPS = [1, 1 / 2, 1 / 3, 1 / 4, 1 / 6, 1 / 12, 1 / 24];
             const EV = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6];
 
             function calcTime(ev, step, base) {return base * Math.pow(2, ev * step);}
