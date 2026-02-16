@@ -740,6 +740,7 @@
     .container { padding: 1.5rem 1rem 1.5rem; }
     h1 { font-size: 1.5rem; }
     .input-row { flex-direction: column; gap: 0.75rem; }
+    .input-row.compact { flex-direction: row; gap: 0.75rem; }
     .result-value.primary { font-size: 1.5rem; }
     .tab-btn { font-size: 0.5rem; padding: 6px 4px; }
     .tab-btn svg { width: 20px; height: 20px; }
@@ -794,7 +795,7 @@
 
   <div class="section">
     <div class="section-label">Configuration</div>
-    <div class="input-row">
+    <div class="input-row compact">
       <div class="input-group">
         <label>Paper type</label>
         <select id="exp-paperType">
@@ -854,6 +855,16 @@
     </div>
   </div>
 
+  <div class="section">
+    <div class="fstop-timer-row" style="margin-top:0; border-top:none; padding-top:0;">
+      <label class="toggle-label">
+        <input type="checkbox" id="exp-fstop-mode">
+        <span class="toggle-switch"></span>
+        <span class="toggle-text">f-stop timer (1/24 stop resolution)</span>
+      </label>
+    </div>
+  </div>
+
   <div class="result-section" id="exp-result-section">
     <div class="section-label">Corrected Exposure</div>
     <div class="result-row">
@@ -866,6 +877,21 @@
     <div class="result-row">
       <span class="result-label">Adjustment</span>
       <span class="result-value" id="exp-adjustment">—</span>
+    </div>
+    <div class="fstop-result" id="exp-fstop-result">
+      <div class="section-label">f-stop timer</div>
+      <div class="fstop-main">
+        <span class="result-label">Correction from base time</span>
+        <span class="fstop-steps" id="exp-fstop-steps"></span>
+      </div>
+      <div class="fstop-main">
+        <span class="result-label">Rounded time</span>
+        <span>
+          <span class="result-value" id="exp-fstop-rounded-time"></span>
+          <span class="result-unit">sec</span>
+        </span>
+      </div>
+      <div class="fstop-detail" id="exp-fstop-detail"></div>
     </div>
   </div>
 </div>
@@ -884,7 +910,7 @@
 
   <div class="section">
     <div class="section-label">Parameters</div>
-    <div class="input-row">
+    <div class="input-row compact">
       <div class="input-group">
         <label>F-stop step</label>
         <select id="fstop-step">
@@ -937,7 +963,7 @@
 
   <div class="section">
     <div class="section-label">Configuration</div>
-    <div class="input-row">
+    <div class="input-row compact">
       <div class="input-group">
         <label>Negative type</label>
         <select id="enlg-negativeType">
@@ -1423,6 +1449,32 @@ window.addEventListener('hashchange', function() {
 
     $('exp-updatedTime').textContent = updated.toFixed(2);
     $('exp-adjustment').textContent = formatFStops(rounded);
+
+    // F-stop timer
+    const fstopMode = $('exp-fstop-mode').checked;
+    const fstopResult = $('exp-fstop-result');
+    if (fstopMode && time > 0) {
+      fstopResult.classList.add('visible');
+      const steps24 = Math.round(fStops * 24);
+      const roundedStops = steps24 / 24;
+      const roundedTime = time * Math.pow(2, roundedStops);
+      const delta = roundedTime - updated;
+      const sign = steps24 >= 0 ? '+' : '';
+      const abs24 = Math.abs(steps24);
+      const whole = Math.floor(abs24 / 24);
+      const rem = abs24 % 24;
+      let stepsStr;
+      if (whole > 0 && rem > 0) stepsStr = `${sign}${whole} ${rem}/24`;
+      else if (whole > 0) stepsStr = `${sign}${whole}`;
+      else stepsStr = `${sign}${steps24}/24`;
+      $('exp-fstop-steps').textContent = stepsStr;
+      $('exp-fstop-rounded-time').textContent = roundedTime.toFixed(1);
+      const dSign = delta >= 0 ? '+' : '';
+      $('exp-fstop-detail').textContent = `Exact: ${updated.toFixed(1)}s → Rounded: ${roundedTime.toFixed(1)}s (Δ ${dSign}${delta.toFixed(2)}s) · ${steps24} steps of 1/24 stop`;
+    } else {
+      fstopResult.classList.remove('visible');
+    }
+
     exposureSave();
   };
 
@@ -1437,7 +1489,8 @@ window.addEventListener('hashchange', function() {
         existingM: $('exp-existingM').value,
         existingTime: $('exp-existingTime').value,
         updatedY: $('exp-updatedY').value,
-        updatedM: $('exp-updatedM').value
+        updatedM: $('exp-updatedM').value,
+        fstopMode: $('exp-fstop-mode').checked
       }));
     } catch(e) {}
   }
@@ -1466,12 +1519,14 @@ window.addEventListener('hashchange', function() {
     if (saved.existingTime) $('exp-existingTime').value = saved.existingTime;
     if (saved.updatedY) $('exp-updatedY').value = saved.updatedY;
     if (saved.updatedM) $('exp-updatedM').value = saved.updatedM;
+    if (saved.fstopMode) $('exp-fstop-mode').checked = saved.fstopMode;
   } else {
     applyFilterToInputs('exp-existingFilterGrade');
     applyFilterToInputs('exp-updatedFilterGrade');
   }
 
   // Events
+  $('exp-fstop-mode').addEventListener('change', exposureCalculate);
   $('exp-paperType').addEventListener('change', function() {
     loadFilterOptions('exp-existingFilterGrade', this.value);
     loadFilterOptions('exp-updatedFilterGrade', this.value);
