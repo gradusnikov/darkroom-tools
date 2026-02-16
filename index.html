@@ -1,39 +1,2224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Darkroom Tools</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="darkroom.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1410">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Darkroom Tools">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Darkroom Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1410;
+    --bg-card: #221c16;
+    --bg-input: #2a2218;
+    --border: #3d3228;
+    --border-focus: #c4713b;
+    --amber: #c4713b;
+    --amber-dim: #8b5029;
+    --amber-glow: #e8924d;
+    --amber-bright: #f5a862;
+    --red-safe: #8b2020;
+    --red-glow: #c43030;
+    --text: #d4c4a8;
+    --text-dim: #8a7d6b;
+    --text-bright: #efe0c8;
+    --cream: #f0e6d0;
+    --tab-height: 60px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #181210;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 50;
+  }
+
+  .tab-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tab-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tab-btn.active {
+    color: var(--amber);
+  }
+
+  .tab-btn:hover {
+    color: var(--amber-glow);
+  }
+
+  /* Views */
+  .view {
+    display: none;
+  }
+
+  .view.active {
+    display: block;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 2rem;
+  }
+
+  .container.wide {
+    max-width: 960px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    font-family: 'Instrument Serif', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.3rem;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+  }
+
+  .subtitle {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .safelight {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--red-glow);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--red-glow), 0 0 20px rgba(196,48,48,0.3);
+    margin-right: 0.5rem;
+    animation: pulse 3s ease-in-out infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* Sections */
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--amber-dim);
+    margin-bottom: 1rem;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+  }
+
+  .input-row:last-child { margin-bottom: 0; }
+
+  .input-group {
+    flex: 1;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.03em;
+  }
+
+  .input-group input, .input-group select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-bright);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    padding: 0.6rem 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  .input-group input:focus, .input-group select:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 0 2px rgba(196,113,59,0.15);
+  }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  /* Slider */
+  .slider-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+
+  .slider-header label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+  }
+
+  .slider-value {
+    font-size: 0.85rem;
+    color: var(--amber-bright);
+    font-weight: 500;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--amber);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(196,113,59,0.4);
+    transition: transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--amber);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Result display */
+  .result-section {
+    background: linear-gradient(135deg, #2a1f14, #1e1810);
+    border: 1px solid var(--amber-dim);
+    border-radius: 8px;
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(196,113,59,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.5rem 0;
+  }
+
+  .result-row + .result-row {
+    border-top: 1px solid rgba(61,50,40,0.6);
+  }
+
+  .result-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .result-value {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--amber-bright);
+  }
+
+  .result-value.primary {
+    font-size: 1.8rem;
+    color: var(--cream);
+    text-shadow: 0 0 20px rgba(240,230,208,0.15);
+  }
+
+  .result-unit {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: 0.25rem;
+  }
+
+  .result-note {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(61,50,40,0.4);
+    line-height: 1.5;
+  }
+
+  /* Chart canvas */
+  .chart-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .chart-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--amber-dim);
+  }
+
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+  }
+
+  /* Formula display */
+  .formula-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .formula {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.2rem;
+    color: var(--text-bright);
+    text-align: center;
+    padding: 0.75rem 0;
+    letter-spacing: 0.02em;
+  }
+
+  .formula-note {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+    margin-top: 0.5rem;
+  }
+
+  /* Calibration */
+  .calibration-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .calibration-toggle:hover {
+    border-color: var(--amber-dim);
+    color: var(--amber);
+  }
+
+  .calibration-panel {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .calibration-panel.open { display: block; }
+
+  .calibration-info {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  /* Warning badge */
+  .warning {
+    display: none;
+    background: rgba(139,32,32,0.15);
+    border: 1px solid rgba(196,48,48,0.3);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.7rem;
+    color: #d4836a;
+    line-height: 1.5;
+  }
+
+  .warning.visible { display: block; }
+
+  .warning-icon {
+    color: var(--red-glow);
+    margin-right: 0.3rem;
+  }
+
+  /* Stops badge */
+  .stops-badge {
+    display: inline-block;
+    background: rgba(196,113,59,0.1);
+    border: 1px solid rgba(196,113,59,0.25);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    color: var(--amber);
+    margin-left: 0.5rem;
+  }
+
+  /* Toggle switch */
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-label input { display: none; }
+
+  .toggle-switch {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    background: var(--border);
+    border-radius: 9px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: var(--text-dim);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle-label input:checked + .toggle-switch {
+    background: var(--amber-dim);
+  }
+
+  .toggle-label input:checked + .toggle-switch::after {
+    transform: translateX(14px);
+    background: var(--amber-bright);
+  }
+
+  .toggle-text {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+  }
+
+  /* F-stop timer row */
+  .fstop-timer-row {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .fstop-result {
+    display: none;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(61,50,40,0.4);
+  }
+
+  .fstop-result.visible { display: block; }
+
+  .fstop-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.4rem 0;
+  }
+
+  .fstop-steps {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--amber-bright);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .fstop-detail {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-top: 0.25rem;
+  }
+
+  /* F-stop table */
+  .fstop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .fstop-table th {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--amber-dim);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .fstop-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(61,50,40,0.3);
+    color: var(--text);
+  }
+
+  .fstop-table tr:hover td {
+    background: rgba(196,113,59,0.05);
+  }
+
+  .fstop-table .time-link {
+    color: var(--amber-bright);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .fstop-table .time-link:hover {
+    color: var(--cream);
+    text-decoration: underline;
+  }
+
+  .fstop-table .row-zero td {
+    color: var(--amber-bright);
+    font-weight: 500;
+  }
+
+  .fstop-table .row-negative td {
+    color: var(--text-dim);
+  }
+
+  .instruction-note {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+  }
+
+  /* Placement tool layout */
+  .placement-layout {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .placement-controls {
+    flex: 0 0 280px;
+    min-width: 0;
+  }
+
+  .placement-canvas-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .placement-canvas-wrap canvas {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: 4px;
+    max-width: 100%;
+    height: auto;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .placement-canvas-wrap canvas.drag-over {
+    border-color: var(--amber);
+    box-shadow: 0 0 10px rgba(196,113,59,0.4);
+  }
+
+  /* Buttons */
+  .btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    border-color: var(--amber-dim);
+    color: var(--amber);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* File input */
+  input[type=file] {
+    width: 100%;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+  }
+
+  input[type=file]::file-selector-button {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+  }
+
+  /* Checkbox */
+  .check-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .check-group input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--amber);
+  }
+
+  .check-group label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  footer p {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 1.5rem 1rem 1.5rem; }
+    h1 { font-size: 1.5rem; }
+    .input-row { flex-direction: column; gap: 0.75rem; }
+    .result-value.primary { font-size: 1.5rem; }
+    .tab-btn { font-size: 0.5rem; padding: 6px 4px; }
+    .tab-btn svg { width: 20px; height: 20px; }
+  }
+
+  @media (max-width: 700px) {
+    .placement-layout {
+      flex-direction: column;
+    }
+    .placement-controls {
+      flex: none;
+    }
+  }
+</style>
 </head>
 <body>
-    <h1>Darkroom Tools</h1>
-    
-    <div class="tools-container">
-        <div class="tool-card">
-            <h2>Exposure Time Calculator</h2>
-            <p>Calculate adjusted exposure times when changing contrast filter grades for darkroom printing.</p>
-            <a href="exposure_adjustment.html">Open Tool</a>
-        </div>
-        
-        <div class="tool-card">
-            <h2>F-stop Calculator</h2>
-            <p>Calculate exposure times using the f-stop timing system for precise darkroom printing.</p>
-            <a href="fstop_adjustment.html">Open Tool</a>
-        </div>
-        
-        <div class="tool-card">
-            <h2>Enlarger Exposure Calculator</h2>
-            <p>Calculate exposure time adjustments when changing print sizes using magnification-based calculations.</p>
-            <a href="opemus_height_adjustment.html">Open Tool</a>
-        </div>
 
-        <div class="tool-card">
-            <h2>Optical Print Placement</h2>
-            <p>Calculate optimal print placement on a mount using optical centering for balanced composition.</p>
-            <a href="optical_print_placement.html">Open Tool</a>
-        </div>
+<!-- ===== TAB BAR ===== -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-view="exposure" onclick="switchView('exposure')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21"/><line x1="3" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21" y2="12"/><line x1="5.6" y1="5.6" x2="7" y2="7"/><line x1="17" y1="17" x2="18.4" y2="18.4"/><line x1="5.6" y1="18.4" x2="7" y2="17"/><line x1="17" y1="7" x2="18.4" y2="5.6"/></svg>
+    Exposure
+  </button>
+  <button class="tab-btn" data-view="fstop" onclick="switchView('fstop')">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h12M4 18h8"/></svg>
+    F-Stop
+  </button>
+  <button class="tab-btn" data-view="enlarger" onclick="switchView('enlarger')">
+    <svg viewBox="0 0 24 24"><rect x="6" y="14" width="12" height="6" rx="1"/><line x1="12" y1="4" x2="12" y2="14"/><circle cx="12" cy="4" r="2"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+    Enlarger
+  </button>
+  <button class="tab-btn" data-view="placement" onclick="switchView('placement')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><rect x="7" y="6" width="10" height="11" rx="0.5"/></svg>
+    Placement
+  </button>
+  <button class="tab-btn" data-view="nomogram" onclick="switchView('nomogram')">
+    <svg viewBox="0 0 24 24"><polyline points="4 20 8 14 12 16 16 8 20 4"/><line x1="4" y1="4" x2="4" y2="20"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+    Nomogram
+  </button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- VIEW 1: EXPOSURE TIME CALCULATOR                             -->
+<!-- ============================================================ -->
+<div id="view-exposure" class="view active">
+<div class="container">
+  <header>
+    <div class="brand">Darkroom Tools</div>
+    <h1>Exposure Time Calculator</h1>
+    <div class="subtitle"><span class="safelight"></span>Filter grade &amp; color head correction</div>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Configuration</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Paper type</label>
+        <select id="exp-paperType">
+          <option value="foma">Foma</option>
+          <option value="ilford">Ilford</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Color head</label>
+        <select id="exp-colorHeadType">
+          <option value="meochrom1">Meochrom 1</option>
+          <option value="meochrom2" selected>Meochrom 2</option>
+        </select>
+      </div>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Current Settings</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Filter grade</label>
+        <select id="exp-existingFilterGrade"></select>
+      </div>
+      <div class="input-group">
+        <label>Yellow</label>
+        <input type="number" id="exp-existingY" value="0" min="0">
+      </div>
+      <div class="input-group">
+        <label>Magenta</label>
+        <input type="number" id="exp-existingM" value="0" min="0">
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Exposure time (seconds)</label>
+        <input type="number" id="exp-existingTime" value="10" step="0.01" min="0.1">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">New Settings</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Filter grade</label>
+        <select id="exp-updatedFilterGrade"></select>
+      </div>
+      <div class="input-group">
+        <label>Yellow</label>
+        <input type="number" id="exp-updatedY" value="0" min="0">
+      </div>
+      <div class="input-group">
+        <label>Magenta</label>
+        <input type="number" id="exp-updatedM" value="0" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="result-section" id="exp-result-section">
+    <div class="section-label">Corrected Exposure</div>
+    <div class="result-row">
+      <span class="result-label">Updated time</span>
+      <span>
+        <span class="result-value primary" id="exp-updatedTime">—</span>
+        <span class="result-unit">sec</span>
+      </span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Adjustment</span>
+      <span class="result-value" id="exp-adjustment">—</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW 2: F-STOP TIMING TABLE                                  -->
+<!-- ============================================================ -->
+<div id="view-fstop" class="view">
+<div class="container">
+  <header>
+    <div class="brand">Darkroom Tools</div>
+    <h1>F-Stop Timer</h1>
+    <div class="subtitle"><span class="safelight"></span>Exposure timing table with dry-down</div>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Parameters</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>F-stop step</label>
+        <select id="fstop-step">
+          <option value="0">1</option>
+          <option value="1">1/2</option>
+          <option value="2">1/3</option>
+          <option value="3">1/4</option>
+          <option value="4">1/6</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Dry down</label>
+        <select id="fstop-dryDown">
+          <option value="0">0%</option>
+          <option value="0.05">5%</option>
+          <option value="0.1">10%</option>
+          <option value="0.15">15%</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Base exposure time (seconds)</label>
+        <input type="number" id="fstop-baseTime" value="10" step="0.01" min="0.1">
+      </div>
+    </div>
+    <p class="instruction-note">Click any time value to set it as the new base time.</p>
+  </div>
+
+  <div class="section" id="fstop-table-wrap">
+    <div class="section-label">Timing Table</div>
+    <table class="fstop-table" id="fstop-table">
+      <thead><tr><th>F-Stop</th><th>Time</th><th>Increment</th></tr></thead>
+      <tbody id="fstop-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW 3: ENLARGER EXPOSURE CALCULATOR                         -->
+<!-- ============================================================ -->
+<div id="view-enlarger" class="view">
+<div class="container">
+  <header>
+    <div class="brand">Darkroom Tools</div>
+    <h1>Enlarger Exposure</h1>
+    <div class="subtitle"><span class="safelight"></span>Magnification-based exposure correction</div>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Configuration</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Negative type</label>
+        <select id="enlg-negativeType">
+          <option value="35mm">35mm</option>
+          <option value="6x6">6x6 120mm</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Units</label>
+        <select id="enlg-unit">
+          <option value="inches">Inches</option>
+          <option value="cm">Centimeters</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Print Dimensions</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Initial print width</label>
+        <input type="number" id="enlg-initialWidth" step="0.1" placeholder="Width">
+      </div>
+      <div class="input-group">
+        <label>Target print width</label>
+        <input type="number" id="enlg-targetWidth" step="0.1" placeholder="Width">
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Initial exposure time (s)</label>
+        <input type="number" id="enlg-initialExposure" step="0.1" placeholder="Seconds">
+      </div>
+    </div>
+  </div>
+
+  <div class="result-section" id="enlg-result-section">
+    <div class="section-label">Corrected Exposure</div>
+    <div class="result-row">
+      <span class="result-label">Initial magnification</span>
+      <span class="result-value" id="enlg-m1">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Target magnification</span>
+      <span class="result-value" id="enlg-m2">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Target exposure</span>
+      <span>
+        <span class="result-value primary" id="enlg-targetExposure">—</span>
+        <span class="result-unit">sec</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="formula-section">
+    <div class="section-label" style="text-align:center;">Formula</div>
+    <div class="formula">t₂ = t₁ × ((m₂ + 1) / (m₁ + 1))²</div>
+    <div class="formula-note">
+      m = print width / negative width<br>
+      Accounts for the inverse square law at different magnifications
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW 4: OPTICAL PRINT PLACEMENT                              -->
+<!-- ============================================================ -->
+<div id="view-placement" class="view">
+<div class="container wide">
+  <header>
+    <div class="brand">Darkroom Tools</div>
+    <h1>Optical Print Placement</h1>
+    <div class="subtitle"><span class="safelight"></span>Calculate optimal print position on a mount</div>
+  </header>
+
+  <div class="placement-layout">
+    <div class="placement-controls">
+      <div class="section">
+        <div class="section-label">Units</div>
+        <div class="input-row">
+          <div class="input-group">
+            <select id="plc-unit">
+              <option value="mm">Millimeters (mm)</option>
+              <option value="in">Inches (in)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Mount Dimensions</div>
+        <div class="input-row">
+          <div class="input-group">
+            <label id="plc-mountWidthLabel">Width (mm)</label>
+            <input type="number" id="plc-mountWidth" value="400" min="0.01" step="any">
+          </div>
+          <div class="input-group">
+            <label id="plc-mountHeightLabel">Height (mm)</label>
+            <input type="number" id="plc-mountHeight" value="500" min="0.01" step="any">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Print Dimensions</div>
+        <div class="input-row">
+          <div class="input-group">
+            <label id="plc-printWidthLabel">Width (mm)</label>
+            <input type="number" id="plc-printWidth" value="200" min="0.01" step="any">
+          </div>
+          <div class="input-group">
+            <label id="plc-printHeightLabel">Height (mm)</label>
+            <input type="number" id="plc-printHeight" value="300" min="0.01" step="any">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label id="plc-offsetLabel">Vertical offset (mm)</label>
+            <input type="number" id="plc-verticalOffset" value="0" step="any">
+          </div>
+        </div>
+        <p class="instruction-note">Positive moves up, negative moves down</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="placementFlip()">&#8596; Flip orientation</button>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Preview Image</div>
+        <input type="file" id="plc-imageUpload" accept="image/*">
+        <button class="btn" id="plc-clearImageBtn" style="display:none; margin-top:0.5rem;" onclick="placementClearImage()">Clear image</button>
+        <p class="instruction-note">Drag &amp; drop an image onto the canvas</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Display Options</div>
+        <div class="check-group">
+          <input type="checkbox" id="plc-showCenter">
+          <label for="plc-showCenter">Show geometric center</label>
+        </div>
+        <div class="check-group">
+          <input type="checkbox" id="plc-showMarks" checked>
+          <label for="plc-showMarks">Show measurement marks</label>
+        </div>
+      </div>
+
+      <div class="result-section" id="plc-results"></div>
+    </div>
+
+    <div class="placement-canvas-wrap">
+      <canvas id="plc-canvas" width="800" height="700"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW 5: OPEMUS 5 NOMOGRAM                                    -->
+<!-- ============================================================ -->
+<div id="view-nomogram" class="view">
+<div class="container">
+  <header>
+    <div class="brand">Meopta</div>
+    <h1>Opemus 5 Exposure Calculator</h1>
+    <div class="subtitle"><span class="safelight"></span>Nomogram correction for f = 50–80 mm lenses</div>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Lens Selection</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Focal length</label>
+        <select id="nom-lens">
+          <option value="50">f = 50–55 mm</option>
+          <option value="80" selected>f = 75–80 mm</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Enlarger Scale Positions</div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <label>Test print position (s₁)</label>
+        <span class="slider-value" id="nom-s1-display">20</span>
+      </div>
+      <input type="range" id="nom-s1" min="12" max="50" step="0.5" value="20">
+    </div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <label>Final print position (s₂)</label>
+        <span class="slider-value" id="nom-s2-display">45</span>
+      </div>
+      <input type="range" id="nom-s2" min="12" max="50" step="0.5" value="45">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Test Print Exposure</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Time (seconds)</label>
+        <input type="number" id="nom-time" value="12.3" step="0.1" min="0.1">
+      </div>
+      <div class="input-group">
+        <label>Test aperture</label>
+        <select id="nom-aperture">
+          <option value="4">f/4</option>
+          <option value="5.6">f/5.6</option>
+          <option value="8">f/8</option>
+          <option value="11">f/11</option>
+          <option value="16">f/16</option>
+          <option value="22">f/22</option>
+          <option value="32" selected>f/32</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Target aperture</label>
+        <select id="nom-target-aperture">
+          <option value="4">f/4</option>
+          <option value="5.6">f/5.6</option>
+          <option value="8">f/8</option>
+          <option value="11">f/11</option>
+          <option value="16">f/16</option>
+          <option value="22">f/22</option>
+          <option value="32" selected>f/32</option>
+        </select>
+      </div>
+    </div>
+    <div class="fstop-timer-row">
+      <label class="toggle-label">
+        <input type="checkbox" id="nom-fstop-mode">
+        <span class="toggle-switch"></span>
+        <span class="toggle-text">f-stop timer (1/24 stop resolution)</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="result-section" id="nom-result-section">
+    <div class="section-label">Corrected Exposure</div>
+    <div class="result-row">
+      <span class="result-label">k coefficient</span>
+      <span class="result-value" id="nom-k-value">3.75</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Corrected time</span>
+      <span>
+        <span class="result-value primary" id="nom-corrected-time">46.1</span>
+        <span class="result-unit">sec</span>
+        <span class="stops-badge" id="nom-stops-badge">+1.9 stops</span>
+      </span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Aperture</span>
+      <span class="result-value" id="nom-result-aperture">f/32</span>
+    </div>
+    <div class="result-note" id="nom-result-note">
+      At the same aperture. If the time is impractically long, open up the lens and halve the time per stop.
+    </div>
+    <div class="warning" id="nom-warning-thin">
+      <span class="warning-icon">⚠</span>
+      <strong>Thin negative + heavy filtration:</strong> This correction may underexpose by ~⅙ to ⅓ stop due to wavelength-dependent scattering. Consider testing at the final position.
+    </div>
+    <div class="fstop-result" id="nom-fstop-result">
+      <div class="section-label">f-stop timer</div>
+      <div class="fstop-main">
+        <span class="result-label">Correction from test time</span>
+        <span class="fstop-steps" id="nom-fstop-steps">+46/24</span>
+      </div>
+      <div class="fstop-main">
+        <span class="result-label">Rounded time</span>
+        <span>
+          <span class="result-value" id="nom-fstop-rounded-time">46.3</span>
+          <span class="result-unit">sec</span>
+        </span>
+      </div>
+      <div class="fstop-detail" id="nom-fstop-detail">
+        Exact: 46.1s → Rounded: 46.3s (Δ +0.2s)
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-header">
+      <span class="chart-title" id="nom-chart-title">Nomogram — k vs. scale position (f = 75–80 mm)</span>
+      <button class="calibration-toggle" id="nom-cal-toggle" onclick="nomogramToggleCalibration()">Calibrate</button>
+    </div>
+    <canvas id="nom-chart" width="620" height="400"></canvas>
+    <div class="calibration-panel" id="nom-cal-panel">
+      <div class="calibration-info">
+        Adjust the <strong>r</strong> parameter if your measured corrections differ from the calculator.
+        Defaults: r = 6.694 for 75–80 mm, r = 14.0 for 50–55 mm (derived from the manual nomograms).
+        A higher r shifts curves right; lower shifts left. Switching lenses resets r to the default.
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>r parameter</label>
+          <input type="number" id="nom-r-param" value="6.694" step="0.1" min="1" max="20">
+        </div>
+        <div class="input-group">
+          <label>Verify: k at s₁→s₂</label>
+          <input type="number" id="nom-verify-k" readonly tabindex="-1" style="color: var(--amber); border-color: transparent; background: transparent;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formula-section">
+    <div class="section-label" style="text-align:center;">Mathematical Model</div>
+    <div class="formula">
+      k = ((r + s₂) / (r + s₁))²
+    </div>
+    <div class="formula-note">
+      where r = <span id="nom-formula-r">6.694</span> for <span id="nom-formula-lens">f=75–80 mm</span> on Opemus 5<br>
+      Derived from the inverse square law adapted to the inclined column geometry<br>
+      s₁ = test position · s₂ = print position · k = time multiplier
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      Based on the Meopta Opemus 5 manual nomogram for f=75÷80 mm lenses.<br>
+      The correction assumes white light / standard filtration conditions.<br>
+      For thin negatives with heavy magenta filtration, test at final magnification.
+    </p>
+  </footer>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT                                                    -->
+<!-- ============================================================ -->
+<script>
+// ── Utility ──
+const $ = id => document.getElementById(id);
+
+// ── View switching ──
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+  document.querySelector(`.tab-btn[data-view="${name}"]`).classList.add('active');
+  localStorage.setItem('darkroom_active_view', name);
+  window.location.hash = name;
+
+  // Trigger canvas redraws after view is visible
+  if (name === 'nomogram') nomogramUpdate();
+  if (name === 'placement') placementDraw();
+}
+
+window.addEventListener('hashchange', function() {
+  const hash = window.location.hash.replace('#', '');
+  if (hash && $('view-' + hash)) switchView(hash);
+});
+
+
+// ================================================================
+// TOOL 1: EXPOSURE TIME CALCULATOR
+// ================================================================
+(function() {
+  const FILTER_SETTINGS = {
+    foma: {
+      "00": {Y:90, M:0}, "0": {Y:60, M:0}, "0.5": {Y:45, M:0},
+      "1": {Y:30, M:0}, "1.5": {Y:15, M:0}, "2": {Y:0, M:10},
+      "2.5": {Y:0, M:15}, "3": {Y:0, M:30}, "3.5": {Y:0, M:60},
+      "4": {Y:0, M:100}, "4.5": {Y:0, M:140}, "5": {Y:0, M:180}
+    },
+    ilford: {
+      "00": {Y:150, M:0}, "0": {Y:90, M:0}, "1": {Y:55, M:0},
+      "2": {Y:0, M:0}, "3": {Y:0, M:40}, "4": {Y:0, M:85},
+      "5": {Y:0, M:150}
+    }
+  };
+
+  const FILTERING_FACTORS = {
+    meochrom1: {
+      0:[1,1,1], 10:[1.03,1.10,1.08], 20:[1.06,1.20,1.15], 30:[1.08,1.26,1.21],
+      40:[1.10,1.33,1.25], 50:[1.12,1.39,1.30], 60:[1.13,1.45,1.34],
+      70:[1.14,1.50,1.38], 80:[1.15,1.55,1.42], 90:[1.16,1.60,1.46],
+      100:[1.17,1.66,1.50], 110:[1.18,1.71,1.54], 120:[1.18,1.77,1.57],
+      130:[1.19,1.82,1.59], 140:[1.19,1.88,1.62], 150:[1.20,1.93,1.65]
+    },
+    meochrom2: {
+      0:[1,1,1], 10:[1.05,1.15,1.09], 20:[1.10,1.28,1.17], 30:[1.14,1.39,1.24],
+      40:[1.17,1.50,1.30], 50:[1.20,1.60,1.36], 60:[1.22,1.69,1.41],
+      70:[1.24,1.78,1.46], 80:[1.25,1.86,1.51], 90:[1.26,1.94,1.56],
+      100:[1.27,2.01,1.60], 110:[1.28,2.08,1.64], 120:[1.29,2.14,1.68],
+      130:[1.29,2.20,1.72], 140:[1.30,2.26,1.75], 150:[1.30,2.31,1.78],
+      160:[1.31,2.36,1.81], 170:[1.31,2.41,1.84], 180:[1.32,2.45,1.86]
+    }
+  };
+
+  function interpolate(factors, value, idx) {
+    const keys = Object.keys(factors).map(Number);
+    for (let i = 0; i < keys.length; i++) {
+      if (value === keys[i]) return factors[value][idx];
+      if (value < keys[i]) {
+        const lo = keys[i-1], hi = keys[i];
+        return factors[lo][idx] + (value - lo) * (factors[hi][idx] - factors[lo][idx]) / (hi - lo);
+      }
+    }
+    return factors[keys[keys.length-1]][idx];
+  }
+
+  function loadFilterOptions(selId, paperType) {
+    const sel = $(selId);
+    sel.innerHTML = '';
+    const grades = Object.keys(FILTER_SETTINGS[paperType]).sort((a,b) => {
+      if (a === "00") return -1; if (b === "00") return 1;
+      return parseFloat(a) - parseFloat(b);
+    });
+    grades.forEach(g => {
+      const o = document.createElement('option');
+      o.value = g; o.textContent = 'Grade ' + g;
+      sel.appendChild(o);
+    });
+    // Default to grade 2
+    const idx2 = grades.indexOf('2');
+    if (idx2 >= 0) sel.selectedIndex = idx2;
+  }
+
+  function applyFilterToInputs(selId) {
+    const grade = $(selId).value;
+    const paper = $('exp-paperType').value;
+    const fs = FILTER_SETTINGS[paper][grade];
+    if (!fs) return;
+    if (selId === 'exp-existingFilterGrade') {
+      $('exp-existingY').value = fs.Y;
+      $('exp-existingM').value = fs.M;
+    } else {
+      $('exp-updatedY').value = fs.Y;
+      $('exp-updatedM').value = fs.M;
+    }
+  }
+
+  function formatFStops(fStops) {
+    const STEPS = [1, 1/3, 1/12, 1/24];
+    const sign = fStops >= 0 ? '+' : '';
+    const abs = Math.abs(fStops);
+    let bestRepr = null, bestDiff = Infinity;
+    for (const step of STEPS) {
+      const mult = Math.round(abs / step);
+      const diff = Math.abs(abs - mult * step);
+      if (diff < bestDiff && mult > 0) {
+        bestDiff = diff;
+        bestRepr = { step, mult };
+      }
+    }
+    if (bestRepr && bestDiff < 0.001) {
+      const { step, mult } = bestRepr;
+      if (step === 1) return `${sign}${mult} f-stop${mult !== 1 ? 's' : ''}`;
+      const den = Math.round(1/step);
+      if (mult === 1) return `${sign}1/${den} f-stop`;
+      const gcd = (a,b) => b === 0 ? a : gcd(b, a%b);
+      const d = gcd(mult, den);
+      const sn = mult/d, sd = den/d;
+      return sd === 1 ? `${sign}${sn} f-stop${sn !== 1 ? 's' : ''}` : `${sign}${sn}/${sd} f-stop`;
+    }
+    return `${sign}${abs.toFixed(3)} f-stops`;
+  }
+
+  window.exposureCalculate = function() {
+    const headType = $('exp-colorHeadType').value;
+    const factors = FILTERING_FACTORS[headType];
+    const eY = parseFloat($('exp-existingY').value) || 0;
+    const eM = parseFloat($('exp-existingM').value) || 0;
+    const nY = parseFloat($('exp-updatedY').value) || 0;
+    const nM = parseFloat($('exp-updatedM').value) || 0;
+    const time = parseFloat($('exp-existingTime').value) || 0;
+    if (time <= 0) { $('exp-updatedTime').textContent = '—'; $('exp-adjustment').textContent = '—'; return; }
+
+    const kYo = interpolate(factors, eY, 0), kMo = interpolate(factors, eM, 1);
+    const kYn = interpolate(factors, nY, 0), kMn = interpolate(factors, nM, 1);
+    const updated = time * (kYn / kYo) * (kMn / kMo);
+
+    const fStops = Math.log2(updated / time);
+    const rounded = Math.round(fStops * 24) / 24;
+
+    $('exp-updatedTime').textContent = updated.toFixed(2);
+    $('exp-adjustment').textContent = formatFStops(rounded);
+    exposureSave();
+  };
+
+  function exposureSave() {
+    try {
+      localStorage.setItem('darkroom_exposure', JSON.stringify({
+        paperType: $('exp-paperType').value,
+        colorHeadType: $('exp-colorHeadType').value,
+        existingFilterGrade: $('exp-existingFilterGrade').value,
+        updatedFilterGrade: $('exp-updatedFilterGrade').value,
+        existingY: $('exp-existingY').value,
+        existingM: $('exp-existingM').value,
+        existingTime: $('exp-existingTime').value,
+        updatedY: $('exp-updatedY').value,
+        updatedM: $('exp-updatedM').value
+      }));
+    } catch(e) {}
+  }
+
+  function exposureLoad() {
+    try {
+      const raw = localStorage.getItem('darkroom_exposure');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch(e) { return null; }
+  }
+
+  // Init
+  const saved = exposureLoad();
+  if (saved && saved.paperType) $('exp-paperType').value = saved.paperType;
+  if (saved && saved.colorHeadType) $('exp-colorHeadType').value = saved.colorHeadType;
+
+  loadFilterOptions('exp-existingFilterGrade', $('exp-paperType').value);
+  loadFilterOptions('exp-updatedFilterGrade', $('exp-paperType').value);
+
+  if (saved) {
+    if (saved.existingFilterGrade) $('exp-existingFilterGrade').value = saved.existingFilterGrade;
+    if (saved.updatedFilterGrade) $('exp-updatedFilterGrade').value = saved.updatedFilterGrade;
+    if (saved.existingY) $('exp-existingY').value = saved.existingY;
+    if (saved.existingM) $('exp-existingM').value = saved.existingM;
+    if (saved.existingTime) $('exp-existingTime').value = saved.existingTime;
+    if (saved.updatedY) $('exp-updatedY').value = saved.updatedY;
+    if (saved.updatedM) $('exp-updatedM').value = saved.updatedM;
+  } else {
+    applyFilterToInputs('exp-existingFilterGrade');
+    applyFilterToInputs('exp-updatedFilterGrade');
+  }
+
+  // Events
+  $('exp-paperType').addEventListener('change', function() {
+    loadFilterOptions('exp-existingFilterGrade', this.value);
+    loadFilterOptions('exp-updatedFilterGrade', this.value);
+    applyFilterToInputs('exp-existingFilterGrade');
+    applyFilterToInputs('exp-updatedFilterGrade');
+    exposureCalculate();
+  });
+  $('exp-colorHeadType').addEventListener('change', exposureCalculate);
+  $('exp-existingFilterGrade').addEventListener('change', function() {
+    applyFilterToInputs('exp-existingFilterGrade');
+    exposureCalculate();
+  });
+  $('exp-updatedFilterGrade').addEventListener('change', function() {
+    applyFilterToInputs('exp-updatedFilterGrade');
+    exposureCalculate();
+  });
+  ['exp-existingY','exp-existingM','exp-existingTime','exp-updatedY','exp-updatedM'].forEach(id => {
+    $(id).addEventListener('input', exposureCalculate);
+  });
+
+  exposureCalculate();
+})();
+
+
+// ================================================================
+// TOOL 2: F-STOP TIMING TABLE
+// ================================================================
+(function() {
+  const FSTOP_STEPS = [1, 1/2, 1/3, 1/4, 1/6];
+  const EV = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6];
+
+  function calcTime(ev, step, base) { return base * Math.pow(2, ev * step); }
+
+  function formatFrac(ev, step) {
+    if (step === 1) return ev.toString();
+    if (ev === 0) return "0";
+    const den = Math.round(1/step);
+    return `${ev}/${den}`;
+  }
+
+  window.fstopSetBaseTime = function(time) {
+    $('fstop-baseTime').value = Number.isInteger(time) ? time : time.toFixed(2);
+    fstopCalculate();
+  };
+
+  window.fstopCalculate = function() {
+    const stepIdx = parseInt($('fstop-step').value);
+    const step = FSTOP_STEPS[stepIdx];
+    const base = parseFloat($('fstop-baseTime').value) || 10;
+    const dryDown = parseFloat($('fstop-dryDown').value) || 0;
+    const adjusted = base * (1 - dryDown);
+
+    const tbody = $('fstop-tbody');
+    tbody.innerHTML = '';
+
+    EV.forEach(ev => {
+      const time = calcTime(ev, step, adjusted);
+      const inc = ev === EV[0] ? time : (time - calcTime(ev - 1, step, adjusted));
+      const timeFmt = Number.isInteger(time) ? time.toString() : time.toFixed(2);
+      const incFmt = Number.isInteger(inc) ? inc.toString() : inc.toFixed(2);
+
+      const tr = document.createElement('tr');
+      if (ev === 0) tr.className = 'row-zero';
+      else if (ev < 0) tr.className = 'row-negative';
+      tr.innerHTML = `<td>${formatFrac(ev, step)}</td>` +
+        `<td><a href="#" class="time-link" onclick="fstopSetBaseTime(${time}); return false;">${timeFmt}</a></td>` +
+        `<td>${incFmt}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    fstopSave();
+  };
+
+  function fstopSave() {
+    try {
+      localStorage.setItem('darkroom_fstop', JSON.stringify({
+        step: $('fstop-step').value,
+        dryDown: $('fstop-dryDown').value,
+        baseTime: $('fstop-baseTime').value
+      }));
+    } catch(e) {}
+  }
+
+  function fstopLoad() {
+    try {
+      const raw = localStorage.getItem('darkroom_fstop');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p.step) $('fstop-step').value = p.step;
+      if (p.dryDown) $('fstop-dryDown').value = p.dryDown;
+      if (p.baseTime) $('fstop-baseTime').value = p.baseTime;
+    } catch(e) {}
+  }
+
+  fstopLoad();
+
+  $('fstop-step').addEventListener('change', fstopCalculate);
+  $('fstop-dryDown').addEventListener('change', fstopCalculate);
+  $('fstop-baseTime').addEventListener('input', fstopCalculate);
+
+  fstopCalculate();
+})();
+
+
+// ================================================================
+// TOOL 3: ENLARGER EXPOSURE CALCULATOR
+// ================================================================
+(function() {
+  const NEG_SIZES = { '35mm': 1.42, '6x6': 2.35 }; // inches
+
+  window.enlargerCalculate = function() {
+    const unit = $('enlg-unit').value;
+    const negType = $('enlg-negativeType').value;
+    const iw = parseFloat($('enlg-initialWidth').value);
+    const tw = parseFloat($('enlg-targetWidth').value);
+    const ie = parseFloat($('enlg-initialExposure').value);
+
+    if (isNaN(iw) || isNaN(tw) || isNaN(ie) || iw <= 0 || tw <= 0 || ie <= 0) {
+      $('enlg-m1').textContent = '—';
+      $('enlg-m2').textContent = '—';
+      $('enlg-targetExposure').textContent = '—';
+      return;
+    }
+
+    const negSize = NEG_SIZES[negType];
+    const iwIn = unit === 'cm' ? iw / 2.54 : iw;
+    const twIn = unit === 'cm' ? tw / 2.54 : tw;
+    const m1 = iwIn / negSize;
+    const m2 = twIn / negSize;
+    const te = ie * Math.pow((m2 + 1) / (m1 + 1), 2);
+
+    $('enlg-m1').textContent = m1.toFixed(2) + '×';
+    $('enlg-m2').textContent = m2.toFixed(2) + '×';
+    $('enlg-targetExposure').textContent = te.toFixed(2);
+    enlargerSave();
+  };
+
+  function enlargerSave() {
+    try {
+      localStorage.setItem('darkroom_enlarger', JSON.stringify({
+        unit: $('enlg-unit').value,
+        negativeType: $('enlg-negativeType').value,
+        initialWidth: $('enlg-initialWidth').value,
+        targetWidth: $('enlg-targetWidth').value,
+        initialExposure: $('enlg-initialExposure').value
+      }));
+    } catch(e) {}
+  }
+
+  function enlargerLoad() {
+    try {
+      const raw = localStorage.getItem('darkroom_enlarger');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p.unit) $('enlg-unit').value = p.unit;
+      if (p.negativeType) $('enlg-negativeType').value = p.negativeType;
+      if (p.initialWidth) $('enlg-initialWidth').value = p.initialWidth;
+      if (p.targetWidth) $('enlg-targetWidth').value = p.targetWidth;
+      if (p.initialExposure) $('enlg-initialExposure').value = p.initialExposure;
+    } catch(e) {}
+  }
+
+  enlargerLoad();
+
+  ['enlg-negativeType','enlg-unit','enlg-initialWidth','enlg-targetWidth','enlg-initialExposure'].forEach(id => {
+    $(id).addEventListener('input', enlargerCalculate);
+    $(id).addEventListener('change', enlargerCalculate);
+  });
+
+  enlargerCalculate();
+})();
+
+
+// ================================================================
+// TOOL 4: OPTICAL PRINT PLACEMENT
+// ================================================================
+(function() {
+  const MM_PER_INCH = 25.4;
+  let previewImage = null;
+
+  function getUnit() { return $('plc-unit').value; }
+  function toMm(v) { return getUnit() === 'in' ? v * MM_PER_INCH : v; }
+  function fromMm(v) { return getUnit() === 'in' ? v / MM_PER_INCH : v; }
+  function fmtVal(v) {
+    return getUnit() === 'in' ? v.toFixed(2) + ' in' : v.toFixed(0) + ' mm';
+  }
+
+  function updateLabels() {
+    const u = getUnit() === 'in' ? 'in' : 'mm';
+    $('plc-mountWidthLabel').textContent = `Width (${u})`;
+    $('plc-mountHeightLabel').textContent = `Height (${u})`;
+    $('plc-printWidthLabel').textContent = `Width (${u})`;
+    $('plc-printHeightLabel').textContent = `Height (${u})`;
+    $('plc-offsetLabel').textContent = `Vertical offset (${u})`;
+  }
+
+  function storeInMm(id) {
+    const el = $(id);
+    const v = parseFloat(el.value);
+    if (!isNaN(v) && (v > 0 || id === 'plc-verticalOffset')) {
+      el.dataset.mmValue = toMm(v);
+    }
+  }
+
+  function convertInputs(toUnit) {
+    ['plc-mountWidth','plc-mountHeight','plc-printWidth','plc-printHeight','plc-verticalOffset'].forEach(id => {
+      const el = $(id);
+      const mm = parseFloat(el.dataset.mmValue);
+      if (!isNaN(mm)) {
+        el.value = toUnit === 'in'
+          ? (mm / MM_PER_INCH).toFixed(3)
+          : (id === 'plc-verticalOffset' ? mm.toFixed(1) : Math.round(mm));
+      }
+    });
+  }
+
+  function initStoredValues() {
+    ['plc-mountWidth','plc-mountHeight','plc-printWidth','plc-printHeight','plc-verticalOffset'].forEach(storeInMm);
+  }
+
+  function loadImage(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        previewImage = img;
+        $('plc-clearImageBtn').style.display = 'block';
+        placementDraw();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  window.placementClearImage = function() {
+    previewImage = null;
+    $('plc-imageUpload').value = '';
+    $('plc-clearImageBtn').style.display = 'none';
+    placementDraw();
+  };
+
+  window.placementFlip = function() {
+    const fields = [['plc-mountWidth','plc-mountHeight'],['plc-printWidth','plc-printHeight']];
+    fields.forEach(([a,b]) => {
+      const ea = $(a), eb = $(b);
+      const tv = ea.value, tm = ea.dataset.mmValue;
+      ea.value = eb.value; ea.dataset.mmValue = eb.dataset.mmValue;
+      eb.value = tv; eb.dataset.mmValue = tm;
+    });
+    placementDraw();
+  };
+
+  window.placementDraw = function() {
+    const Mx = toMm(parseFloat($('plc-mountWidth').value));
+    const My = toMm(parseFloat($('plc-mountHeight').value));
+    const Px = toMm(parseFloat($('plc-printWidth').value));
+    const Py = toMm(parseFloat($('plc-printHeight').value));
+    const offIn = parseFloat($('plc-verticalOffset').value);
+    const vOff = toMm(isNaN(offIn) ? 0 : offIn);
+    const showCenter = $('plc-showCenter').checked;
+    const showMarks = $('plc-showMarks').checked;
+
+    const results = $('plc-results');
+
+    if (isNaN(Mx) || isNaN(My) || isNaN(Px) || isNaN(Py) || Mx <= 0 || My <= 0 || Px <= 0 || Py <= 0) {
+      results.innerHTML = '<div class="section-label">Results</div><div class="result-note">Enter valid positive dimensions.</div>';
+      return;
+    }
+    if (Px >= Mx || Py >= My) {
+      results.innerHTML = '<div class="section-label">Results</div><div class="result-note">Print must be smaller than mount.</div>';
+      return;
+    }
+
+    const x = Math.round((Mx - Px) / 2);
+    const baseY = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+    const y = baseY - vOff;
+    const left = x, right = Mx - Px - x;
+    const top = y, bottom = My - Py - y;
+    const cx = (Mx - Px) / 2, cy = (My - Py) / 2;
+
+    const canvas = $('plc-canvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const padT = 40, padB = 60, padL = 60, padR = 100;
+    const aW = W - padL - padR, aH = H - padT - padB;
+    const sc = Math.min(aW / Mx, aH / My);
+    const mW = Mx * sc, mH = My * sc, pW = Px * sc, pH = Py * sc;
+    const oX = padL + (aW - mW) / 2, oY = padT + (aH - mH) / 2;
+
+    // Mount
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(oX, oY, mW, mH);
+    ctx.strokeStyle = 'rgba(61,50,40,0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(oX, oY, mW, mH);
+
+    const pX = oX + x * sc, pY = oY + y * sc;
+
+    // Preview image or color fill
+    if (previewImage) {
+      const iA = previewImage.width / previewImage.height;
+      const pA = pW / pH;
+      let dW, dH, dX, dY;
+      if (iA > pA) { dW = pW; dH = pW / iA; dX = pX; dY = pY; }
+      else { dH = pH; dW = pH * iA; dX = pX + (pW - dW) / 2; dY = pY; }
+      ctx.drawImage(previewImage, dX, dY, dW, dH);
+    } else {
+      ctx.fillStyle = 'rgba(196,113,59,0.5)';
+      ctx.fillRect(pX, pY, pW, pH);
+    }
+
+    if (!previewImage || showMarks) {
+      ctx.strokeStyle = '#c4713b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(pX, pY, pW, pH);
+    }
+
+    // Geometric center
+    if (showCenter) {
+      const cpX = oX + cx * sc, cpY = oY + cy * sc;
+      ctx.strokeStyle = '#5a8fb8';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(cpX, cpY, pW, pH);
+      ctx.setLineDash([]);
+      if (!previewImage || showMarks) {
+        ctx.fillStyle = '#5a8fb8';
+        ctx.font = "500 11px 'DM Mono', monospace";
+        ctx.fillText('Geometric', cpX + 4, cpY + 14);
+      }
+    }
+
+    // Measurement marks
+    if (showMarks) {
+      ctx.strokeStyle = 'rgba(138,125,107,0.5)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      // Top
+      ctx.beginPath(); ctx.moveTo(oX - 8, pY); ctx.lineTo(oX + mW + 8, pY); ctx.stroke();
+      // Bottom
+      ctx.beginPath(); ctx.moveTo(oX - 8, pY + pH); ctx.lineTo(oX + mW + 8, pY + pH); ctx.stroke();
+      // Left
+      ctx.beginPath(); ctx.moveTo(pX, oY - 8); ctx.lineTo(pX, oY + mH + 8); ctx.stroke();
+      // Right
+      ctx.beginPath(); ctx.moveTo(pX + pW, oY - 8); ctx.lineTo(pX + pW, oY + mH + 8); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#c4713b';
+      ctx.font = "500 11px 'DM Mono', monospace";
+      ctx.fillText('Top: ' + fmtVal(fromMm(top)), oX + mW + 8, pY + 5);
+      ctx.fillText('Bottom: ' + fmtVal(fromMm(bottom)), oX + mW + 8, pY + pH + 5);
+      ctx.fillText('Left: ' + fmtVal(fromMm(left)), pX + 4, oY + mH + 18);
+      ctx.fillText('Right: ' + fmtVal(fromMm(right)), pX + pW - 60, oY + mH + 18);
+
+      // Center dots
+      ctx.fillStyle = '#c4713b';
+      ctx.beginPath(); ctx.arc(oX + mW/2, oY + mH/2, 3, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f5a862';
+      ctx.beginPath(); ctx.arc(pX + pW/2, pY + pH/2, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    if (!previewImage || showMarks) {
+      ctx.fillStyle = '#c4713b';
+      ctx.font = "500 11px 'DM Mono', monospace";
+      ctx.fillText('Optical', pX + 4, pY + 14);
+    }
+
+    // Results
+    const diff = bottom - top;
+    let offInfo = '';
+    if (vOff !== 0) {
+      offInfo = `<div class="result-row"><span class="result-label">Custom offset</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(vOff))} ${vOff > 0 ? 'up' : 'down'}</span></div>`;
+    }
+    results.innerHTML = `<div class="section-label">Optical Placement</div>` + offInfo +
+      `<div class="result-row"><span class="result-label">Left</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(left))}</span></div>` +
+      `<div class="result-row"><span class="result-label">Right</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(right))}</span></div>` +
+      `<div class="result-row"><span class="result-label">Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(top))}</span></div>` +
+      `<div class="result-row"><span class="result-label">Bottom</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(bottom))}</span></div>` +
+      `<div class="result-row"><span class="result-label">Bottom − Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(diff))}</span></div>` +
+      (showCenter ? `<div class="result-note">Geometric center comparison: ${fmtVal(fromMm(cy - top))} higher with optical centering</div>` : '');
+
+    placementSave();
+  };
+
+  function placementSave() {
+    try {
+      localStorage.setItem('darkroom_placement', JSON.stringify({
+        unit: getUnit(),
+        mountWidth: $('plc-mountWidth').value,
+        mountHeight: $('plc-mountHeight').value,
+        printWidth: $('plc-printWidth').value,
+        printHeight: $('plc-printHeight').value,
+        verticalOffset: $('plc-verticalOffset').value,
+        showCenter: $('plc-showCenter').checked,
+        showMarks: $('plc-showMarks').checked
+      }));
+    } catch(e) {}
+  }
+
+  function placementLoad() {
+    try {
+      const raw = localStorage.getItem('darkroom_placement');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p.unit) $('plc-unit').value = p.unit;
+      if (p.mountWidth) $('plc-mountWidth').value = p.mountWidth;
+      if (p.mountHeight) $('plc-mountHeight').value = p.mountHeight;
+      if (p.printWidth) $('plc-printWidth').value = p.printWidth;
+      if (p.printHeight) $('plc-printHeight').value = p.printHeight;
+      if (p.verticalOffset !== undefined) $('plc-verticalOffset').value = p.verticalOffset;
+      if (p.showCenter !== undefined) $('plc-showCenter').checked = p.showCenter;
+      if (p.showMarks !== undefined) $('plc-showMarks').checked = p.showMarks;
+    } catch(e) {}
+  }
+
+  placementLoad();
+  initStoredValues();
+  updateLabels();
+
+  // Events
+  $('plc-unit').addEventListener('change', function() {
+    convertInputs(getUnit());
+    updateLabels();
+    placementDraw();
+  });
+
+  ['plc-mountWidth','plc-mountHeight','plc-printWidth','plc-printHeight','plc-verticalOffset'].forEach(id => {
+    $(id).addEventListener('input', function() { storeInMm(id); placementDraw(); });
+  });
+
+  $('plc-showCenter').addEventListener('change', placementDraw);
+  $('plc-showMarks').addEventListener('change', placementDraw);
+
+  $('plc-imageUpload').addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) loadImage(e.target.files[0]);
+  });
+
+  // Drag & drop
+  const cvs = $('plc-canvas');
+  cvs.addEventListener('dragover', function(e) { e.preventDefault(); cvs.classList.add('drag-over'); });
+  cvs.addEventListener('dragenter', function(e) { e.preventDefault(); cvs.classList.add('drag-over'); });
+  cvs.addEventListener('dragleave', function(e) { e.preventDefault(); cvs.classList.remove('drag-over'); });
+  cvs.addEventListener('drop', function(e) {
+    e.preventDefault(); cvs.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0 && files[0].type.startsWith('image/')) loadImage(files[0]);
+  });
+
+  // Only draw if view is visible (switchView will trigger draw otherwise)
+  if ($('view-placement').classList.contains('active')) placementDraw();
+})();
+
+
+// ================================================================
+// TOOL 5: OPEMUS 5 NOMOGRAM
+// ================================================================
+(function() {
+  const LENS_CONFIG = {
+    '50': { r: 14.0, sMin: 1, sMax: 50, kMin: 0.02, kMax: 35, curves: [1,2,4,6,8,10,20,30,40,50], label: 'f = 50–55 mm' },
+    '80': { r: 6.694, sMin: 12, sMax: 50, kMin: 0.1, kMax: 15, curves: [13,16,18,20,22,25,30,35,40,45,50], label: 'f = 75–80 mm' }
+  };
+
+  let R = 6.694;
+
+  function calcK(s1, s2, r) { return Math.pow((r + s2) / (r + s1), 2); }
+  function stopsFromK(k) { return Math.log2(k); }
+  function fmtStops(stops) { return `${stops >= 0 ? '+' : ''}${stops.toFixed(1)} stops`; }
+
+  function updateSliderRanges() {
+    const cfg = LENS_CONFIG[$('nom-lens').value];
+    $('nom-s1').min = cfg.sMin; $('nom-s1').max = cfg.sMax;
+    $('nom-s2').min = cfg.sMin; $('nom-s2').max = cfg.sMax;
+    let s1 = parseFloat($('nom-s1').value), s2 = parseFloat($('nom-s2').value);
+    if (s1 < cfg.sMin) $('nom-s1').value = cfg.sMin;
+    if (s1 > cfg.sMax) $('nom-s1').value = cfg.sMax;
+    if (s2 < cfg.sMin) $('nom-s2').value = cfg.sMin;
+    if (s2 > cfg.sMax) $('nom-s2').value = cfg.sMax;
+    $('nom-r-param').value = cfg.r;
+  }
+
+  window.nomogramUpdate = function() {
+    const s1 = parseFloat($('nom-s1').value);
+    const s2 = parseFloat($('nom-s2').value);
+    const time = parseFloat($('nom-time').value) || 0;
+    const aperture = parseFloat($('nom-aperture').value);
+    const targetAperture = parseFloat($('nom-target-aperture').value);
+    R = parseFloat($('nom-r-param').value) || 6.694;
+
+    $('nom-s1-display').textContent = s1 % 1 === 0 ? s1 : s1.toFixed(1);
+    $('nom-s2-display').textContent = s2 % 1 === 0 ? s2 : s2.toFixed(1);
+
+    const k = calcK(s1, s2, R);
+    const apertureStops = 2 * Math.log2(aperture / targetAperture);
+    const apertureFactor = Math.pow(2, -apertureStops);
+    const correctedTime = time * k * apertureFactor;
+    const totalStops = stopsFromK(k) - apertureStops;
+
+    $('nom-k-value').textContent = k.toFixed(3);
+    $('nom-corrected-time').textContent = correctedTime.toFixed(1);
+    $('nom-result-aperture').textContent = `f/${targetAperture}`;
+    $('nom-stops-badge').textContent = fmtStops(totalStops);
+    $('nom-verify-k').value = k.toFixed(4);
+    $('nom-formula-r').textContent = R.toFixed(3);
+    $('nom-formula-lens').textContent = LENS_CONFIG[$('nom-lens').value].label;
+    $('nom-chart-title').textContent = `Nomogram — k vs. scale position (${LENS_CONFIG[$('nom-lens').value].label})`;
+
+    const apNote = aperture !== targetAperture
+      ? ` Aperture changed by ${Math.abs(apertureStops).toFixed(1)} stop${Math.abs(apertureStops) !== 1 ? 's' : ''} (${apertureStops > 0 ? 'opened' : 'stopped down'}).`
+      : '';
+
+    if (correctedTime > 120) {
+      const sugF = targetAperture / 1.414;
+      $('nom-result-note').innerHTML = `<strong>Long exposure.</strong> Consider opening the lens. At f/${sugF.toFixed(1)} the time would be ~${(correctedTime/2).toFixed(1)}s.${apNote}`;
+    } else if (correctedTime < 3 && time > 0) {
+      $('nom-result-note').textContent = 'Short exposure — consider stopping down.' + apNote;
+    } else {
+      $('nom-result-note').textContent = apNote || 'Same aperture. If the time is impractically long, open up the target aperture.';
+    }
+
+    // F-stop timer
+    const fstopMode = $('nom-fstop-mode').checked;
+    const fstopResult = $('nom-fstop-result');
+    if (fstopMode && time > 0) {
+      fstopResult.classList.add('visible');
+      const steps24 = Math.round(totalStops * 24);
+      const roundedStops = steps24 / 24;
+      const roundedTime = time * Math.pow(2, roundedStops);
+      const delta = roundedTime - correctedTime;
+      const sign = steps24 >= 0 ? '+' : '';
+      const abs24 = Math.abs(steps24);
+      const whole = Math.floor(abs24 / 24);
+      const rem = abs24 % 24;
+      let stepsStr;
+      if (whole > 0 && rem > 0) stepsStr = `${sign}${whole} ${rem}/24`;
+      else if (whole > 0) stepsStr = `${sign}${whole}`;
+      else stepsStr = `${sign}${steps24}/24`;
+      $('nom-fstop-steps').textContent = stepsStr;
+      $('nom-fstop-rounded-time').textContent = roundedTime.toFixed(1);
+      const dSign = delta >= 0 ? '+' : '';
+      $('nom-fstop-detail').textContent = `Exact: ${correctedTime.toFixed(1)}s → Rounded: ${roundedTime.toFixed(1)}s (Δ ${dSign}${delta.toFixed(2)}s) · ${steps24} steps of 1/24 stop`;
+    } else {
+      fstopResult.classList.remove('visible');
+    }
+
+    nomogramSave();
+    nomogramDrawChart(s1, s2, k);
+  };
+
+  function nomogramDrawChart(activS1, activS2, activK) {
+    const lens = $('nom-lens').value;
+    const cfg = LENS_CONFIG[lens];
+    const canvas = $('nom-chart');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+
+    const pad = { top: 20, right: 45, bottom: 35, left: 50 };
+    const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+    const sMin = cfg.sMin, sMax = cfg.sMax;
+    const kMin = cfg.kMin, kMax = cfg.kMax;
+    const logKMin = Math.log10(kMin), logKMax = Math.log10(kMax);
+
+    function xPos(s) { return pad.left + (s - sMin) / (sMax - sMin) * cw; }
+    function yPos(k) {
+      const lk = Math.log10(Math.max(k, 0.001));
+      return pad.top + ch - (lk - logKMin) / (logKMax - logKMin) * ch;
+    }
+
+    ctx.fillStyle = '#1a1410';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid - H
+    const kGridAll = [0.02,0.03,0.04,0.05,0.1,0.15,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,2,3,4,5,6,7,8,9,10,15,20,30,35];
+    const kGridVals = kGridAll.filter(v => v >= kMin && v <= kMax);
+    const kLabelAll = [0.02,0.03,0.05,0.1,0.15,0.2,0.3,0.5,1,2,3,5,10,15,20,30,35];
+    const kLabelVals = kLabelAll.filter(v => v >= kMin && v <= kMax);
+
+    ctx.strokeStyle = 'rgba(61,50,40,0.4)';
+    ctx.lineWidth = 0.5;
+    kGridVals.forEach(kv => {
+      const y = yPos(kv);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    });
+
+    // Grid - V
+    let sGridVals = sMin <= 1 ? [1,5,10,15,20,25,30,35,40,45,50] : [12,15,20,25,30,35,40,45,50];
+    sGridVals = sGridVals.filter(v => v >= sMin && v <= sMax);
+    sGridVals.forEach(sv => {
+      const x = xPos(sv);
+      ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+    });
+
+    // K=1 ref
+    if (kMin <= 1 && kMax >= 1) {
+      ctx.strokeStyle = 'rgba(196,113,59,0.2)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, yPos(1)); ctx.lineTo(W - pad.right, yPos(1)); ctx.stroke();
+    }
+
+    // Curves
+    const isActive = tp => Math.abs(tp - activS1) < 0.5;
+    cfg.curves.forEach(tp => {
+      const active = isActive(tp);
+      ctx.strokeStyle = active ? '#c4713b' : 'rgba(212,196,168,0.18)';
+      ctx.lineWidth = active ? 2 : 1;
+      ctx.beginPath();
+      let first = true;
+      for (let s = sMin; s <= sMax; s += 0.25) {
+        const k = calcK(tp, s, R);
+        if (k < kMin || k > kMax) continue;
+        if (first) { ctx.moveTo(xPos(s), yPos(k)); first = false; }
+        else ctx.lineTo(xPos(s), yPos(k));
+      }
+      ctx.stroke();
+      const labelK = calcK(tp, sMax, R);
+      if (labelK <= kMax && labelK >= kMin) {
+        ctx.fillStyle = active ? '#c4713b' : 'rgba(138,125,107,0.5)';
+        ctx.font = `${active ? '500' : '300'} ${active ? '11px' : '9px'} 'DM Mono', monospace`;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(tp, W - pad.right + 4, yPos(labelK));
+      }
+    });
+
+    // Active point
+    if (activK >= kMin && activK <= kMax) {
+      const px = xPos(activS2), py = yPos(activK);
+      ctx.strokeStyle = 'rgba(196,113,59,0.3)'; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(px, pad.top); ctx.lineTo(px, H - pad.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad.left, py); ctx.lineTo(W - pad.right, py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(232,146,77,0.15)';
+      ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e8924d';
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f5a862';
+      ctx.font = "500 11px 'DM Mono', monospace";
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(`k=${activK.toFixed(2)}`, px + 8, py - 6);
+    }
+
+    // Axis labels - X
+    ctx.fillStyle = 'rgba(138,125,107,0.7)';
+    ctx.font = "300 10px 'DM Mono', monospace";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    sGridVals.forEach(sv => ctx.fillText(sv, xPos(sv), H - pad.bottom + 6));
+
+    // Axis labels - Y
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    kLabelVals.forEach(kv => {
+      let lbl;
+      if (kv >= 1) lbl = kv.toString();
+      else if (kv === 0.15) lbl = '0.15';
+      else lbl = kv.toFixed(kv < 0.1 ? 2 : 1);
+      ctx.fillText(lbl, pad.left - 8, yPos(kv));
+    });
+
+    // Axis titles
+    ctx.fillStyle = 'rgba(138,125,107,0.5)';
+    ctx.font = "300 9px 'DM Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('enlarger scale', pad.left + cw/2, H - 3);
+    ctx.save();
+    ctx.translate(10, pad.top + ch/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText('k coefficient', 0, 0);
+    ctx.restore();
+  }
+
+  window.nomogramToggleCalibration = function() {
+    const panel = $('nom-cal-panel');
+    const btn = $('nom-cal-toggle');
+    panel.classList.toggle('open');
+    btn.textContent = panel.classList.contains('open') ? 'Close' : 'Calibrate';
+  };
+
+  function nomogramSave() {
+    try {
+      localStorage.setItem('darkroom_nomogram', JSON.stringify({
+        lens: $('nom-lens').value,
+        s1: $('nom-s1').value,
+        s2: $('nom-s2').value,
+        time: $('nom-time').value,
+        aperture: $('nom-aperture').value,
+        targetAperture: $('nom-target-aperture').value,
+        rParam: $('nom-r-param').value,
+        fstopMode: $('nom-fstop-mode').checked
+      }));
+    } catch(e) {}
+  }
+
+  function nomogramLoad() {
+    try {
+      const raw = localStorage.getItem('darkroom_nomogram');
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (p.lens) $('nom-lens').value = p.lens;
+      updateSliderRanges();
+      if (p.s1) $('nom-s1').value = p.s1;
+      if (p.s2) $('nom-s2').value = p.s2;
+      if (p.time) $('nom-time').value = p.time;
+      if (p.aperture) $('nom-aperture').value = p.aperture;
+      if (p.targetAperture) $('nom-target-aperture').value = p.targetAperture;
+      if (p.rParam) $('nom-r-param').value = p.rParam;
+      if (p.fstopMode !== undefined) $('nom-fstop-mode').checked = p.fstopMode;
+    } catch(e) {}
+  }
+
+  $('nom-lens').addEventListener('change', function() { updateSliderRanges(); nomogramUpdate(); });
+  ['nom-s1','nom-s2','nom-time','nom-aperture','nom-target-aperture','nom-r-param'].forEach(id => {
+    $(id).addEventListener('input', nomogramUpdate);
+  });
+  $('nom-fstop-mode').addEventListener('change', nomogramUpdate);
+  window.addEventListener('resize', function() {
+    if ($('view-nomogram').classList.contains('active')) nomogramUpdate();
+    if ($('view-placement').classList.contains('active')) placementDraw();
+  });
+
+  nomogramLoad();
+  // Only draw chart if view is visible (switchView will trigger draw otherwise)
+  if ($('view-nomogram').classList.contains('active')) nomogramUpdate();
+})();
+
+// Restore last active view (must run after all tools are initialized)
+(function() {
+  const hash = window.location.hash.replace('#', '');
+  const saved = hash || localStorage.getItem('darkroom_active_view');
+  if (saved && $('view-' + saved)) {
+    switchView(saved);
+  }
+})();
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
 </body>
 </html>
