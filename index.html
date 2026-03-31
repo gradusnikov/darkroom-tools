@@ -1639,6 +1639,9 @@
                                 <option value="hp5">HP5 Plus 400</option>
                                 <option value="fp4">FP4 Plus 125</option>
                             </optgroup>
+                            <optgroup label="Kentmere">
+                                <option value="kentmere200">Kentmere 200</option>
+                            </optgroup>
                             <optgroup label="Rollei">
                                 <option value="rpx400">RPX 400 (Aviphot)</option>
                             </optgroup>
@@ -2825,77 +2828,61 @@
         // ================================================================
         (function () {
             // Film/developer database: base times in minutes at 20C
-            // Sources: Massive Dev Chart, manufacturer datasheets
+            // Sources cited per entry. Intermittent agitation assumed.
             const FILM_DEV_DB = {
                 trix: {
                     name: 'Kodak Tri-X 400',
                     developers: {
-                        rodinal:     { time: 11,   dilution: '1+25' },
-                        rodinal50:   { time: 15,   dilution: '1+50' },
-                        hc110b:      { time: 6,    dilution: 'B (1+31)' },
-                        hc110h:      { time: 12.5, dilution: 'H (1+63)' },
-                        xtol:        { time: 6.5,  dilution: '1+0' },
-                        xtol1:       { time: 8.5,  dilution: '1+1' },
-                        d76:         { time: 6.75, dilution: '1+0' },
-                        d76_1:       { time: 9.75, dilution: '1+1' },
-                        microphen:   { time: 6,    dilution: '1+0' },
-                        id11:        { time: 7.5,  dilution: '1+0' },
-                        ddx:         { time: 9,    dilution: '1+4' },
-                        fomadon_lqn: { time: 7,    dilution: '1+10' }
+                        // Massive Dev Chart + Parallax Photographic (manufacturer data)
+                        rodinal:      { time: 7,    dilution: '1+25' },
+                        // Massive Dev Chart 13 min; Foma foreign films chart 13-14 min
+                        rodinal50:    { time: 13,   dilution: '1+50' },
+                        // Massive Dev Chart (user-submitted, not manufacturer-tested)
+                        fomadon_lqn:  { time: 15,   dilution: '1+10' }
                     }
                 },
                 hp5: {
                     name: 'Ilford HP5 Plus 400',
                     developers: {
-                        rodinal:     { time: 11,   dilution: '1+25' },
-                        rodinal50:   { time: 17,   dilution: '1+50' },
-                        hc110b:      { time: 6.5,  dilution: 'B (1+31)' },
-                        hc110h:      { time: 13,   dilution: 'H (1+63)' },
-                        xtol:        { time: 7,    dilution: '1+0' },
-                        xtol1:       { time: 9.5,  dilution: '1+1' },
-                        d76:         { time: 6.5,  dilution: '1+0' },
-                        d76_1:       { time: 10,   dilution: '1+1' },
-                        microphen:   { time: 7,    dilution: '1+0' },
-                        id11:        { time: 6.5,  dilution: '1+0' },
-                        id11_1:      { time: 10,   dilution: '1+1' },
-                        perceptol:   { time: 14,   dilution: '1+0' },
-                        ddx:         { time: 9,    dilution: '1+4' },
-                        fomadon_lqn: { time: 7.5,  dilution: '1+10' }
+                        // Ilford HP5 Plus Technical Datasheet (Nov 2018)
+                        rodinal:      { time: 6,    dilution: '1+25' },
+                        // Ilford HP5 Plus Technical Datasheet (Nov 2018)
+                        rodinal50:    { time: 11,   dilution: '1+50' },
+                        // Foma foreign films document (FOMA 09/16)
+                        fomadon_lqn:  { time: 9.5,  dilution: '1+10' }
                     }
                 },
                 fp4: {
                     name: 'Ilford FP4 Plus 125',
                     developers: {
-                        rodinal:     { time: 9,    dilution: '1+25' },
-                        rodinal50:   { time: 13,   dilution: '1+50' },
-                        hc110b:      { time: 5,    dilution: 'B (1+31)' },
-                        hc110h:      { time: 10,   dilution: 'H (1+63)' },
-                        xtol:        { time: 6,    dilution: '1+0' },
-                        xtol1:       { time: 8,    dilution: '1+1' },
-                        d76:         { time: 5.5,  dilution: '1+0' },
-                        d76_1:       { time: 8,    dilution: '1+1' },
-                        microphen:   { time: 6,    dilution: '1+0' },
-                        id11:        { time: 5.5,  dilution: '1+0' },
-                        id11_1:      { time: 8,    dilution: '1+1' },
-                        perceptol:   { time: 10,   dilution: '1+0' },
-                        ddx:         { time: 8,    dilution: '1+4' },
-                        fomadon_lqn: { time: 6,    dilution: '1+10' }
+                        // Ilford FP4 Plus Technical Datasheet (Nov 2018)
+                        rodinal:      { time: 9,    dilution: '1+25' },
+                        // Ilford FP4 Plus Technical Datasheet (Nov 2018)
+                        rodinal50:    { time: 15,   dilution: '1+50' },
+                        // Foma foreign films document (FOMA 09/16)
+                        fomadon_lqn:  { time: 9,    dilution: '1+10' },
+                        // Third-party LQN datasheet (Tony de Pinho)
+                        fomadon_lqn14:{ time: 11,   dilution: '1+14' }
                     }
                 },
                 rpx400: {
                     name: 'Rollei RPX 400',
                     developers: {
-                        rodinal:     { time: 10,   dilution: '1+25' },
-                        rodinal50:   { time: 15,   dilution: '1+50' },
-                        hc110b:      { time: 6,    dilution: 'B (1+31)' },
-                        xtol:        { time: 7,    dilution: '1+0' },
-                        xtol1:       { time: 9,    dilution: '1+1' },
-                        d76:         { time: 7,    dilution: '1+0' },
-                        d76_1:       { time: 9.5,  dilution: '1+1' },
-                        microphen:   { time: 7,    dilution: '1+0' },
-                        id11:        { time: 7,    dilution: '1+0' },
-                        ddx:         { time: 9,    dilution: '1+4' },
-                        fomadon_lqn: { time: 7,    dilution: '1+10' }
+                        // Rollei RPX 400 Official Datasheet (R210701)
+                        rodinal:      { time: 12,   dilution: '1+25' },
+                        // Rollei RPX 400 Official Datasheet (R210701)
+                        rodinal50:    { time: 21,   dilution: '1+50' }
+                        // Fomadon LQN: no published data for this film
+                    }
+                },
+                kentmere200: {
+                    name: 'Kentmere 200',
+                    developers: {
+                        // Massive Dev Chart (user-submitted, 6-10 min spread; 10 for 35mm)
+                        rodinal:      { time: 10,   dilution: '1+25' },
+                        // Massive Dev Chart + Flickr Kentmere group (11-12 min)
+                        rodinal50:    { time: 11,   dilution: '1+50' }
+                        // Fomadon LQN: no published data for this film
                     }
                 },
                 custom: {
@@ -2906,21 +2893,11 @@
 
             // Developer display names for the dropdown
             const DEV_NAMES = {
-                rodinal:     'Rodinal 1+25',
-                rodinal50:   'Rodinal 1+50',
-                hc110b:      'HC-110 B (1+31)',
-                hc110h:      'HC-110 H (1+63)',
-                xtol:        'Xtol 1+0',
-                xtol1:       'Xtol 1+1',
-                d76:         'D-76 1+0',
-                d76_1:       'D-76 1+1',
-                microphen:   'Microphen 1+0',
-                id11:        'ID-11 1+0',
-                id11_1:      'ID-11 1+1',
-                perceptol:   'Perceptol 1+0',
-                ddx:         'DDX 1+4',
-                fomadon_lqn: 'Fomadon LQN 1+10',
-                custom:      'Custom'
+                rodinal:       'Rodinal 1+25',
+                rodinal50:     'Rodinal 1+50',
+                fomadon_lqn:   'Fomadon LQN 1+10',
+                fomadon_lqn14: 'Fomadon LQN 1+14',
+                custom:        'Custom'
             };
 
             let currentPushPull = 0;
