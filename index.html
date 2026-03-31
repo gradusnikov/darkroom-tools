@@ -972,6 +972,14 @@
             </svg>
             Dilution
         </button>
+        <button class="tab-btn" data-view="devtime" onclick="switchView('devtime')">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="13" r="9" />
+                <polyline points="12 7 12 13 16 15" />
+                <line x1="12" y1="2" x2="12" y2="4" />
+            </svg>
+            Dev Time
+        </button>
     </nav>
 
     <!-- ============================================================ -->
@@ -1601,6 +1609,122 @@
                 </div>
                 <div class="result-note" id="dev-note">
                     <strong>Tip:</strong> Tare your vessel, weigh the concentrate first, then add water to reach the total. Density varies by batch -- weigh a known volume to calibrate.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VIEW 7: DEVELOPMENT TIME CALCULATOR                           -->
+    <!-- ============================================================ -->
+    <div id="view-devtime" class="view">
+        <div class="container">
+            <header>
+                <div class="brand">Darkroom Tools</div>
+                <h1>Development Time</h1>
+                <div class="subtitle"><span class="safelight"></span>Push-pull &amp; temperature compensation</div>
+            </header>
+
+            <div class="section">
+                <div class="section-label">Film &amp; Developer</div>
+                <div class="input-row compact">
+                    <div class="input-group">
+                        <label>Film</label>
+                        <select id="dt-film">
+                            <option value="custom">Custom</option>
+                            <optgroup label="Kodak">
+                                <option value="trix" selected>Tri-X 400</option>
+                            </optgroup>
+                            <optgroup label="Ilford">
+                                <option value="hp5">HP5 Plus 400</option>
+                                <option value="fp4">FP4 Plus 125</option>
+                            </optgroup>
+                            <optgroup label="Rollei">
+                                <option value="rpx400">RPX 400 (Aviphot)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Developer</label>
+                        <select id="dt-developer">
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Base Development</div>
+                <div class="input-row compact">
+                    <div class="input-group">
+                        <label>Time (minutes)</label>
+                        <input type="number" id="dt-baseTime" value="8" min="0.1" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label>Reference temp (C)</label>
+                        <input type="number" id="dt-refTemp" value="20" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Push / Pull</div>
+                <div class="dev-presets" id="dt-pushpull-presets"></div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Compensation per stop (%)</label>
+                        <input type="number" id="dt-factor" value="25" min="1" max="100" step="1">
+                    </div>
+                </div>
+                <p class="instruction-note">Percentage increase per stop of push, applied exponentially.</p>
+            </div>
+
+            <div class="section">
+                <div class="section-label">Actual Temperature</div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Temperature (C)</label>
+                        <input type="number" id="dt-actualTemp" value="20" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-section" id="dt-result-section">
+                <div class="section-label">Adjusted Development Time</div>
+                <div class="result-row">
+                    <span class="result-label">Base time</span>
+                    <span>
+                        <span class="result-value" id="dt-res-base">8:00</span>
+                        <span class="result-unit">min</span>
+                    </span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">After push/pull</span>
+                    <span>
+                        <span class="result-value" id="dt-res-pushpull">8:00</span>
+                        <span class="result-unit">min</span>
+                    </span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Final time</span>
+                    <span>
+                        <span class="result-value primary" id="dt-res-final">8:00</span>
+                        <span class="result-unit">min</span>
+                    </span>
+                </div>
+                <div class="result-note" id="dt-res-note">
+                    At reference temperature. No adjustment needed.
+                </div>
+            </div>
+
+            <div class="formula-section">
+                <div class="section-label" style="text-align:center;">Formulas</div>
+                <div class="formula">t_push = t_base x (1 + f/100)^N</div>
+                <div class="formula" style="margin-top:0.5rem">t_final = t_push x 2^((T_ref - T) / 10)</div>
+                <div class="formula-note">
+                    f = compensation factor per stop<br>
+                    N = push (+) or pull (-) stops<br>
+                    Temperature model: Q10 = 2 (rate doubles per 10 C)
                 </div>
             </div>
         </div>
@@ -2693,6 +2817,277 @@
             } else {
                 devOnChemicalChange();
             }
+        })();
+
+
+        // ================================================================
+        // TOOL 7: DEVELOPMENT TIME CALCULATOR
+        // ================================================================
+        (function () {
+            // Film/developer database: base times in minutes at 20C
+            // Sources: Massive Dev Chart, manufacturer datasheets
+            const FILM_DEV_DB = {
+                trix: {
+                    name: 'Kodak Tri-X 400',
+                    developers: {
+                        rodinal:     { time: 11,   dilution: '1+25' },
+                        rodinal50:   { time: 15,   dilution: '1+50' },
+                        hc110b:      { time: 6,    dilution: 'B (1+31)' },
+                        hc110h:      { time: 12.5, dilution: 'H (1+63)' },
+                        xtol:        { time: 6.5,  dilution: '1+0' },
+                        xtol1:       { time: 8.5,  dilution: '1+1' },
+                        d76:         { time: 6.75, dilution: '1+0' },
+                        d76_1:       { time: 9.75, dilution: '1+1' },
+                        microphen:   { time: 6,    dilution: '1+0' },
+                        id11:        { time: 7.5,  dilution: '1+0' },
+                        ddx:         { time: 9,    dilution: '1+4' },
+                        fomadon_lqn: { time: 7,    dilution: '1+10' }
+                    }
+                },
+                hp5: {
+                    name: 'Ilford HP5 Plus 400',
+                    developers: {
+                        rodinal:     { time: 11,   dilution: '1+25' },
+                        rodinal50:   { time: 17,   dilution: '1+50' },
+                        hc110b:      { time: 6.5,  dilution: 'B (1+31)' },
+                        hc110h:      { time: 13,   dilution: 'H (1+63)' },
+                        xtol:        { time: 7,    dilution: '1+0' },
+                        xtol1:       { time: 9.5,  dilution: '1+1' },
+                        d76:         { time: 6.5,  dilution: '1+0' },
+                        d76_1:       { time: 10,   dilution: '1+1' },
+                        microphen:   { time: 7,    dilution: '1+0' },
+                        id11:        { time: 6.5,  dilution: '1+0' },
+                        id11_1:      { time: 10,   dilution: '1+1' },
+                        perceptol:   { time: 14,   dilution: '1+0' },
+                        ddx:         { time: 9,    dilution: '1+4' },
+                        fomadon_lqn: { time: 7.5,  dilution: '1+10' }
+                    }
+                },
+                fp4: {
+                    name: 'Ilford FP4 Plus 125',
+                    developers: {
+                        rodinal:     { time: 9,    dilution: '1+25' },
+                        rodinal50:   { time: 13,   dilution: '1+50' },
+                        hc110b:      { time: 5,    dilution: 'B (1+31)' },
+                        hc110h:      { time: 10,   dilution: 'H (1+63)' },
+                        xtol:        { time: 6,    dilution: '1+0' },
+                        xtol1:       { time: 8,    dilution: '1+1' },
+                        d76:         { time: 5.5,  dilution: '1+0' },
+                        d76_1:       { time: 8,    dilution: '1+1' },
+                        microphen:   { time: 6,    dilution: '1+0' },
+                        id11:        { time: 5.5,  dilution: '1+0' },
+                        id11_1:      { time: 8,    dilution: '1+1' },
+                        perceptol:   { time: 10,   dilution: '1+0' },
+                        ddx:         { time: 8,    dilution: '1+4' },
+                        fomadon_lqn: { time: 6,    dilution: '1+10' }
+                    }
+                },
+                rpx400: {
+                    name: 'Rollei RPX 400',
+                    developers: {
+                        rodinal:     { time: 10,   dilution: '1+25' },
+                        rodinal50:   { time: 15,   dilution: '1+50' },
+                        hc110b:      { time: 6,    dilution: 'B (1+31)' },
+                        xtol:        { time: 7,    dilution: '1+0' },
+                        xtol1:       { time: 9,    dilution: '1+1' },
+                        d76:         { time: 7,    dilution: '1+0' },
+                        d76_1:       { time: 9.5,  dilution: '1+1' },
+                        microphen:   { time: 7,    dilution: '1+0' },
+                        id11:        { time: 7,    dilution: '1+0' },
+                        ddx:         { time: 9,    dilution: '1+4' },
+                        fomadon_lqn: { time: 7,    dilution: '1+10' }
+                    }
+                },
+                custom: {
+                    name: 'Custom',
+                    developers: {}
+                }
+            };
+
+            // Developer display names for the dropdown
+            const DEV_NAMES = {
+                rodinal:     'Rodinal 1+25',
+                rodinal50:   'Rodinal 1+50',
+                hc110b:      'HC-110 B (1+31)',
+                hc110h:      'HC-110 H (1+63)',
+                xtol:        'Xtol 1+0',
+                xtol1:       'Xtol 1+1',
+                d76:         'D-76 1+0',
+                d76_1:       'D-76 1+1',
+                microphen:   'Microphen 1+0',
+                id11:        'ID-11 1+0',
+                id11_1:      'ID-11 1+1',
+                perceptol:   'Perceptol 1+0',
+                ddx:         'DDX 1+4',
+                fomadon_lqn: 'Fomadon LQN 1+10',
+                custom:      'Custom'
+            };
+
+            let currentPushPull = 0;
+
+            function formatTime(minutes) {
+                if (minutes <= 0) return '0:00';
+                const m = Math.floor(minutes);
+                const s = Math.round((minutes - m) * 60);
+                if (s === 60) return (m + 1) + ':00';
+                return m + ':' + (s < 10 ? '0' : '') + s;
+            }
+
+            function populateDevelopers() {
+                const filmKey = $('dt-film').value;
+                const sel = $('dt-developer');
+                const prevDev = sel.value;
+                sel.innerHTML = '';
+
+                if (filmKey === 'custom') {
+                    const o = document.createElement('option');
+                    o.value = 'custom'; o.textContent = 'Custom';
+                    sel.appendChild(o);
+                    return;
+                }
+
+                const film = FILM_DEV_DB[filmKey];
+                const devKeys = Object.keys(film.developers);
+                devKeys.forEach(function (key) {
+                    const o = document.createElement('option');
+                    o.value = key;
+                    o.textContent = DEV_NAMES[key] || key;
+                    sel.appendChild(o);
+                });
+
+                // Restore previous selection if available in new film
+                if (devKeys.indexOf(prevDev) >= 0) {
+                    sel.value = prevDev;
+                }
+            }
+
+            function applyFilmDevSelection() {
+                const filmKey = $('dt-film').value;
+                const devKey = $('dt-developer').value;
+
+                if (filmKey !== 'custom' && devKey !== 'custom') {
+                    const film = FILM_DEV_DB[filmKey];
+                    const entry = film.developers[devKey];
+                    if (entry) {
+                        $('dt-baseTime').value = entry.time;
+                    }
+                }
+            }
+
+            function renderPushPullButtons() {
+                const container = $('dt-pushpull-presets');
+                container.innerHTML = '';
+                var values = [-3, -2, -1, 0, 1, 2, 3];
+                var labels = ['N-3', 'N-2', 'N-1', 'N', 'N+1', 'N+2', 'N+3'];
+                values.forEach(function (v, i) {
+                    var btn = document.createElement('button');
+                    btn.className = 'dev-preset-btn' + (v === currentPushPull ? ' active' : '');
+                    btn.textContent = labels[i];
+                    btn.onclick = function () {
+                        currentPushPull = v;
+                        document.querySelectorAll('#dt-pushpull-presets .dev-preset-btn').forEach(function (b) {
+                            b.classList.remove('active');
+                        });
+                        btn.classList.add('active');
+                        devtimeCalculate();
+                    };
+                    container.appendChild(btn);
+                });
+            }
+
+            window.devtimeCalculate = function () {
+                var baseTime = parseFloat($('dt-baseTime').value) || 0;
+                var refTemp = parseFloat($('dt-refTemp').value) || 20;
+                var factor = parseFloat($('dt-factor').value) || 25;
+                var actualTemp = parseFloat($('dt-actualTemp').value) || 20;
+
+                // Push/pull: exponential model
+                var pushPullMultiplier = Math.pow(1 + factor / 100, currentPushPull);
+                var timePushPull = baseTime * pushPullMultiplier;
+
+                // Temperature: Q10 = 2 model
+                var tempDelta = refTemp - actualTemp;
+                var tempMultiplier = Math.pow(2, tempDelta / 10);
+                var timeFinal = timePushPull * tempMultiplier;
+
+                $('dt-res-base').textContent = formatTime(baseTime);
+                $('dt-res-pushpull').textContent = formatTime(timePushPull);
+                $('dt-res-final').textContent = formatTime(timeFinal);
+
+                // Build note
+                var parts = [];
+                if (currentPushPull !== 0) {
+                    var pct = (pushPullMultiplier - 1) * 100;
+                    var sign = pct >= 0 ? '+' : '';
+                    parts.push((currentPushPull > 0 ? 'Push ' : 'Pull ') + Math.abs(currentPushPull) + ' stop' + (Math.abs(currentPushPull) > 1 ? 's' : '') + ': ' + sign + pct.toFixed(0) + '% (' + pushPullMultiplier.toFixed(3) + 'x)');
+                }
+                if (Math.abs(tempDelta) > 0.01) {
+                    var tSign = actualTemp > refTemp ? '+' : '';
+                    var tPct = (tempMultiplier - 1) * 100;
+                    var tPctSign = tPct >= 0 ? '+' : '';
+                    parts.push('Temperature ' + tSign + (actualTemp - refTemp).toFixed(1) + ' C: ' + tPctSign + tPct.toFixed(0) + '% (' + tempMultiplier.toFixed(3) + 'x)');
+                }
+                if (parts.length === 0) {
+                    $('dt-res-note').textContent = 'At reference temperature. No adjustment needed.';
+                } else {
+                    $('dt-res-note').innerHTML = parts.join('<br>');
+                }
+
+                devtimeSave();
+            };
+
+            function devtimeSave() {
+                try {
+                    localStorage.setItem('darkroom_devtime', JSON.stringify({
+                        film: $('dt-film').value,
+                        developer: $('dt-developer').value,
+                        baseTime: $('dt-baseTime').value,
+                        refTemp: $('dt-refTemp').value,
+                        pushPull: currentPushPull,
+                        factor: $('dt-factor').value,
+                        actualTemp: $('dt-actualTemp').value
+                    }));
+                } catch (e) { }
+            }
+
+            function devtimeLoad() {
+                try {
+                    var raw = localStorage.getItem('darkroom_devtime');
+                    if (!raw) return false;
+                    var p = JSON.parse(raw);
+                    if (p.film) $('dt-film').value = p.film;
+                    populateDevelopers();
+                    if (p.developer) $('dt-developer').value = p.developer;
+                    if (p.baseTime) $('dt-baseTime').value = p.baseTime;
+                    if (p.refTemp) $('dt-refTemp').value = p.refTemp;
+                    if (p.pushPull !== undefined) currentPushPull = p.pushPull;
+                    if (p.factor) $('dt-factor').value = p.factor;
+                    if (p.actualTemp) $('dt-actualTemp').value = p.actualTemp;
+                    return true;
+                } catch (e) { return false; }
+            }
+
+            // Events
+            $('dt-film').addEventListener('change', function () {
+                populateDevelopers();
+                applyFilmDevSelection();
+                devtimeCalculate();
+            });
+            $('dt-developer').addEventListener('change', function () {
+                applyFilmDevSelection();
+                devtimeCalculate();
+            });
+            ['dt-baseTime', 'dt-refTemp', 'dt-factor', 'dt-actualTemp'].forEach(function (id) {
+                $(id).addEventListener('input', devtimeCalculate);
+            });
+
+            // Init
+            if (!devtimeLoad()) {
+                populateDevelopers();
+                applyFilmDevSelection();
+            }
+            renderPushPullButtons();
+            devtimeCalculate();
         })();
 
 
