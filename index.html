@@ -1634,6 +1634,7 @@
                             <option value="custom">Custom</option>
                             <optgroup label="Kodak">
                                 <option value="trix" selected>Tri-X 400</option>
+                                <option value="doublex">Double-X 5222</option>
                             </optgroup>
                             <optgroup label="Ilford">
                                 <option value="hp5">HP5 Plus 400</option>
@@ -1643,7 +1644,7 @@
                                 <option value="kentmere200">Kentmere 200</option>
                             </optgroup>
                             <optgroup label="Rollei">
-                                <option value="rpx400">RPX 400 (Aviphot)</option>
+                                <option value="retro400s">Retro 400S</option>
                             </optgroup>
                         </select>
                     </div>
@@ -1668,6 +1669,7 @@
                         <input type="number" id="dt-refTemp" value="20" step="0.5">
                     </div>
                 </div>
+                <button class="btn" style="margin-top:0.75rem" onclick="devtimeReset()">Reset to defaults</button>
             </div>
 
             <div class="section">
@@ -1676,10 +1678,10 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label>Compensation per stop (%)</label>
-                        <input type="number" id="dt-factor" value="25" min="1" max="100" step="1">
+                        <input type="number" id="dt-factor" value="33" min="1" max="100" step="1">
                     </div>
                 </div>
-                <p class="instruction-note">Percentage increase per stop of push, applied exponentially.</p>
+                <p class="instruction-note">Fallback factor when no verified time exists. 33% from Rollei datasheet. Shown as "estimated" in results.</p>
             </div>
 
             <div class="section">
@@ -2827,62 +2829,173 @@
         // TOOL 7: DEVELOPMENT TIME CALCULATOR
         // ================================================================
         (function () {
-            // Film/developer database: base times in minutes at 20C
-            // Sources cited per entry. Intermittent agitation assumed.
-            const FILM_DEV_DB = {
+            // Film/developer database: times in minutes at 20C
+            // Each developer entry has: dilution, times{N: min}, source per N value
+            // times keys: 0=box speed, 1=N+1, 2=N+2, -1=N-1, etc.
+            // Default factor (33%) used as fallback where no verified time exists.
+            // Factor 1.33x/stop from Rollei RPX 400 datasheet; confirmed by HP5 data.
+            var DEFAULT_FACTOR = 33;
+
+            var FILM_DEV_DB = {
                 trix: {
                     name: 'Kodak Tri-X 400',
                     developers: {
-                        // Massive Dev Chart + Parallax Photographic (manufacturer data)
-                        rodinal:      { time: 7,    dilution: '1+25' },
-                        // Massive Dev Chart 13 min; Foma foreign films chart 13-14 min
-                        rodinal50:    { time: 13,   dilution: '1+50' },
-                        // Massive Dev Chart (user-submitted, not manufacturer-tested)
-                        fomadon_lqn:  { time: 15,   dilution: '1+10' }
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                               '-1': 7, // MDC: EI 200, 20C
+                                0: 7,   // MDC: EI 400, 20C
+                                2: 13,  // MDC: EI 1600, 20C
+                                3: 17   // MDC: EI 3200, 20.5C
+                            }
+                            // N+1 (800): only 6.5 at 24C, no 20C data
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                               '-2': 7.5, // MDC: EI 100, 20C
+                               '-1': 9,   // MDC: EI 200, 20C
+                                0: 13,    // MDC: EI 400, 20C
+                                1: 16.5,  // MDC: EI 800, 20C
+                                2: 18.5,  // MDC: EI 1600, 20C
+                                3: 33     // MDC: EI 3200, 20C
+                            }
+                        },
+                        fomadon_lqn: {
+                            dilution: '1+10',
+                            times: {
+                                0: 15   // MDC (user-submitted)
+                            }
+                        }
                     }
                 },
                 hp5: {
                     name: 'Ilford HP5 Plus 400',
                     developers: {
-                        // Ilford HP5 Plus Technical Datasheet (Nov 2018)
-                        rodinal:      { time: 6,    dilution: '1+25' },
-                        // Ilford HP5 Plus Technical Datasheet (Nov 2018)
-                        rodinal50:    { time: 11,   dilution: '1+50' },
-                        // Foma foreign films document (FOMA 09/16)
-                        fomadon_lqn:  { time: 9.5,  dilution: '1+10' }
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                               '-2': 6,  // MDC: EI 100, 20C
+                               '-1': 5,  // MDC: EI 200, 20C
+                                0: 6,    // MDC: EI 400, 20C
+                                1: 8,    // MDC: EI 800, 20C
+                                2: 12,   // MDC: EI 1600, 20C
+                                3: 18    // MDC: EI 3200, 21C
+                            }
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                               '-2': 9,  // MDC: EI 100, 20C
+                                0: 11,   // MDC: EI 400, 20C
+                                1: 16,   // MDC: EI 800, 20C
+                                2: 24    // MDC: EI 1600, 20C
+                            }
+                            // N-1 (200): MDC says 10-13 (range), not precise
+                        },
+                        fomadon_lqn: {
+                            dilution: '1+10',
+                            times: {
+                                0: 9.5   // Foma foreign films doc (FOMA 09/16)
+                            }
+                        }
                     }
                 },
                 fp4: {
                     name: 'Ilford FP4 Plus 125',
                     developers: {
-                        // Ilford FP4 Plus Technical Datasheet (Nov 2018)
-                        rodinal:      { time: 9,    dilution: '1+25' },
-                        // Ilford FP4 Plus Technical Datasheet (Nov 2018)
-                        rodinal50:    { time: 15,   dilution: '1+50' },
-                        // Foma foreign films document (FOMA 09/16)
-                        fomadon_lqn:  { time: 9,    dilution: '1+10' },
-                        // Third-party LQN datasheet (Tony de Pinho)
-                        fomadon_lqn14:{ time: 11,   dilution: '1+14' }
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                                0: 9,    // MDC: EI 125, 20C
+                                1: 13,   // MDC: EI 200, 20C
+                                3: 35    // MDC: EI 800, 20C
+                            }
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                               '-1': 12, // MDC: EI 100, 20C (closest to N-1/64)
+                                0: 15,   // MDC: EI 125, 20C
+                                1: 20,   // MDC: EI 200, 20C
+                                2: 26    // MDC: EI 250, 20C
+                            }
+                        },
+                        fomadon_lqn: {
+                            dilution: '1+10',
+                            times: {
+                                0: 9     // Foma foreign films doc (FOMA 09/16)
+                            }
+                        },
+                        fomadon_lqn14: {
+                            dilution: '1+14',
+                            times: {
+                                0: 11    // Third-party LQN datasheet
+                            }
+                        }
                     }
                 },
-                rpx400: {
-                    name: 'Rollei RPX 400',
+                doublex: {
+                    name: 'Kodak Double-X 5222',
+                    // Box speed 250. MDC data at 20C.
                     developers: {
-                        // Rollei RPX 400 Official Datasheet (R210701)
-                        rodinal:      { time: 12,   dilution: '1+25' },
-                        // Rollei RPX 400 Official Datasheet (R210701)
-                        rodinal50:    { time: 21,   dilution: '1+50' }
-                        // Fomadon LQN: no published data for this film
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                                0: 5.75, // MDC: EI 250, 20C
+                                1: 7.5,  // MDC: EI 500, 20C
+                                2: 9.25  // MDC: EI 1000, 20C
+                            }
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                                0: 9,    // MDC: EI 250, 20C
+                                1: 11,   // MDC: EI 400, 20C (approx N+1)
+                                2: 16    // MDC: EI 800, 20C
+                            }
+                        },
+                        fomadon_lqn7: {
+                            dilution: '1+7',
+                            times: {
+                                1: 17    // MDC: EI 400, 20C (push from 250)
+                            }
+                        }
+                    }
+                },
+                retro400s: {
+                    name: 'Rollei Retro 400S',
+                    developers: {
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                                0: 10.5, // MDC: EI 400, 20C
+                                2: 20    // MDC (R09): EI 1600, 20C
+                            }
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                                0: 22    // MDC: EI 400, 20C
+                            }
+                        }
                     }
                 },
                 kentmere200: {
                     name: 'Kentmere 200',
                     developers: {
-                        // Massive Dev Chart (user-submitted, 6-10 min spread; 10 for 35mm)
-                        rodinal:      { time: 10,   dilution: '1+25' },
-                        // Massive Dev Chart + Flickr Kentmere group (11-12 min)
-                        rodinal50:    { time: 11,   dilution: '1+50' }
-                        // Fomadon LQN: no published data for this film
+                        rodinal: {
+                            dilution: '1+25',
+                            times: {
+                                0: 10    // MDC (user-submitted, 35mm)
+                            }
+                        },
+                        rodinal50: {
+                            dilution: '1+50',
+                            times: {
+                                0: 11    // MDC + Flickr Kentmere group
+                            }
+                        }
                     }
                 },
                 custom: {
@@ -2891,68 +3004,80 @@
                 }
             };
 
-            // Developer display names for the dropdown
-            const DEV_NAMES = {
+            var DEV_NAMES = {
                 rodinal:       'Rodinal 1+25',
                 rodinal50:     'Rodinal 1+50',
                 fomadon_lqn:   'Fomadon LQN 1+10',
+                fomadon_lqn7:  'Fomadon LQN 1+7',
                 fomadon_lqn14: 'Fomadon LQN 1+14',
                 custom:        'Custom'
             };
 
-            let currentPushPull = 0;
+            var currentPushPull = 0;
 
             function formatTime(minutes) {
                 if (minutes <= 0) return '0:00';
-                const m = Math.floor(minutes);
-                const s = Math.round((minutes - m) * 60);
+                var m = Math.floor(minutes);
+                var s = Math.round((minutes - m) * 60);
                 if (s === 60) return (m + 1) + ':00';
                 return m + ':' + (s < 10 ? '0' : '') + s;
             }
 
+            function getDevEntry() {
+                var filmKey = $('dt-film').value;
+                var devKey = $('dt-developer').value;
+                if (filmKey === 'custom' || devKey === 'custom') return null;
+                var film = FILM_DEV_DB[filmKey];
+                if (!film) return null;
+                return film.developers[devKey] || null;
+            }
+
             function populateDevelopers() {
-                const filmKey = $('dt-film').value;
-                const sel = $('dt-developer');
-                const prevDev = sel.value;
+                var filmKey = $('dt-film').value;
+                var sel = $('dt-developer');
+                var prevDev = sel.value;
                 sel.innerHTML = '';
 
                 if (filmKey === 'custom') {
-                    const o = document.createElement('option');
+                    var o = document.createElement('option');
                     o.value = 'custom'; o.textContent = 'Custom';
                     sel.appendChild(o);
                     return;
                 }
 
-                const film = FILM_DEV_DB[filmKey];
-                const devKeys = Object.keys(film.developers);
+                var film = FILM_DEV_DB[filmKey];
+                var devKeys = Object.keys(film.developers);
                 devKeys.forEach(function (key) {
-                    const o = document.createElement('option');
+                    var o = document.createElement('option');
                     o.value = key;
                     o.textContent = DEV_NAMES[key] || key;
                     sel.appendChild(o);
                 });
 
-                // Restore previous selection if available in new film
                 if (devKeys.indexOf(prevDev) >= 0) {
                     sel.value = prevDev;
                 }
             }
 
             function applyFilmDevSelection() {
-                const filmKey = $('dt-film').value;
-                const devKey = $('dt-developer').value;
-
-                if (filmKey !== 'custom' && devKey !== 'custom') {
-                    const film = FILM_DEV_DB[filmKey];
-                    const entry = film.developers[devKey];
-                    if (entry) {
-                        $('dt-baseTime').value = entry.time;
-                    }
+                var entry = getDevEntry();
+                if (entry && entry.times[0] !== undefined) {
+                    $('dt-baseTime').value = entry.times[0];
                 }
             }
 
+            window.devtimeReset = function () {
+                currentPushPull = 0;
+                $('dt-refTemp').value = 20;
+                $('dt-actualTemp').value = 20;
+                $('dt-factor').value = DEFAULT_FACTOR;
+                applyFilmDevSelection();
+                renderPushPullButtons();
+                devtimeCalculate();
+            };
+
             function renderPushPullButtons() {
-                const container = $('dt-pushpull-presets');
+                var container = $('dt-pushpull-presets');
                 container.innerHTML = '';
                 var values = [-3, -2, -1, 0, 1, 2, 3];
                 var labels = ['N-3', 'N-2', 'N-1', 'N', 'N+1', 'N+2', 'N+3'];
@@ -2975,12 +3100,29 @@
             window.devtimeCalculate = function () {
                 var baseTime = parseFloat($('dt-baseTime').value) || 0;
                 var refTemp = parseFloat($('dt-refTemp').value) || 20;
-                var factor = parseFloat($('dt-factor').value) || 25;
+                var factor = parseFloat($('dt-factor').value) || DEFAULT_FACTOR;
                 var actualTemp = parseFloat($('dt-actualTemp').value) || 20;
+                var N = currentPushPull;
 
-                // Push/pull: exponential model
-                var pushPullMultiplier = Math.pow(1 + factor / 100, currentPushPull);
-                var timePushPull = baseTime * pushPullMultiplier;
+                // Look up verified push/pull time
+                var entry = getDevEntry();
+                var verifiedTime = null;
+                var isVerified = false;
+                if (entry && entry.times[N] !== undefined) {
+                    verifiedTime = entry.times[N];
+                    isVerified = true;
+                }
+
+                // Push/pull time: use verified if available, else exponential model
+                var timePushPull;
+                var pushPullMultiplier;
+                if (isVerified) {
+                    timePushPull = verifiedTime;
+                    pushPullMultiplier = baseTime > 0 ? verifiedTime / baseTime : 1;
+                } else {
+                    pushPullMultiplier = Math.pow(1 + factor / 100, N);
+                    timePushPull = baseTime * pushPullMultiplier;
+                }
 
                 // Temperature: Q10 = 2 model
                 var tempDelta = refTemp - actualTemp;
@@ -2993,10 +3135,15 @@
 
                 // Build note
                 var parts = [];
-                if (currentPushPull !== 0) {
+                if (N !== 0) {
                     var pct = (pushPullMultiplier - 1) * 100;
                     var sign = pct >= 0 ? '+' : '';
-                    parts.push((currentPushPull > 0 ? 'Push ' : 'Pull ') + Math.abs(currentPushPull) + ' stop' + (Math.abs(currentPushPull) > 1 ? 's' : '') + ': ' + sign + pct.toFixed(0) + '% (' + pushPullMultiplier.toFixed(3) + 'x)');
+                    var label = (N > 0 ? 'Push ' : 'Pull ') + Math.abs(N) + ' stop' + (Math.abs(N) > 1 ? 's' : '');
+                    if (isVerified) {
+                        parts.push(label + ': ' + formatTime(timePushPull) + ' (verified)');
+                    } else {
+                        parts.push(label + ': ' + sign + pct.toFixed(0) + '% (estimated, ' + pushPullMultiplier.toFixed(2) + 'x)');
+                    }
                 }
                 if (Math.abs(tempDelta) > 0.01) {
                     var tSign = actualTemp > refTemp ? '+' : '';
