@@ -1246,7 +1246,7 @@
         <div class="container wide">
             <header>
                 <div class="brand">Darkroom Tools</div>
-                <h1>Optical Print Placement</h1>
+                <h1>Print Placement</h1>
                 <div class="subtitle"><span class="safelight"></span>Calculate optimal print position on a mount</div>
             </header>
 
@@ -1262,6 +1262,19 @@
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-label">Placement Mode</div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <select id="plc-mode">
+                                    <option value="optical">Optical (weighted)</option>
+                                    <option value="geometric">Geometric (centered)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="instruction-note">Optical centering places the print slightly above the geometric center to compensate for visual perception</p>
                     </div>
 
                     <div class="section">
@@ -1315,7 +1328,7 @@
                         <div class="section-label">Display Options</div>
                         <div class="check-group">
                             <input type="checkbox" id="plc-showCenter">
-                            <label for="plc-showCenter">Show geometric center</label>
+                            <label for="plc-showCenter" id="plc-showCenterLabel">Show alternative placement</label>
                         </div>
                         <div class="check-group">
                             <input type="checkbox" id="plc-showMarks" checked>
@@ -2224,6 +2237,7 @@
                 const Py = toMm(parseFloat($('plc-printHeight').value));
                 const offIn = parseFloat($('plc-verticalOffset').value);
                 const vOff = toMm(isNaN(offIn) ? 0 : offIn);
+                const mode = $('plc-mode').value;
                 const showCenter = $('plc-showCenter').checked;
                 const showMarks = $('plc-showMarks').checked;
 
@@ -2239,11 +2253,15 @@
                 }
 
                 const x = Math.round((Mx - Px) / 2);
-                const baseY = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+                const opticalY = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
+                const geometricY = Math.round((My - Py) / 2);
+                const baseY = mode === 'geometric' ? geometricY : opticalY;
                 const y = baseY - vOff;
                 const left = x, right = Mx - Px - x;
                 const top = y, bottom = My - Py - y;
-                const cx = (Mx - Px) / 2, cy = (My - Py) / 2;
+                // Alternative (the other mode), for comparison overlay
+                const altY = mode === 'geometric' ? opticalY : geometricY;
+                const altX = (Mx - Px) / 2;
 
                 const canvas = $('plc-canvas');
                 const ctx = canvas.getContext('2d');
@@ -2289,9 +2307,9 @@
                     ctx.strokeRect(pX, pY, pW, pH);
                 }
 
-                // Geometric center
+                // Alternative placement overlay (the other mode)
                 if (showCenter) {
-                    const cpX = oX + cx * sc, cpY = oY + cy * sc;
+                    const cpX = oX + altX * sc, cpY = oY + altY * sc;
                     ctx.strokeStyle = '#5a8fb8';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([8, 4]);
@@ -2300,7 +2318,7 @@
                     if (!previewImage || showMarks) {
                         ctx.fillStyle = '#5a8fb8';
                         ctx.font = "500 11px 'DM Mono', monospace";
-                        ctx.fillText('Geometric', cpX + 4, cpY + 14);
+                        ctx.fillText(mode === 'geometric' ? 'Optical' : 'Geometric', cpX + 4, cpY + 14);
                     }
                 }
 
@@ -2336,7 +2354,7 @@
                 if (!previewImage || showMarks) {
                     ctx.fillStyle = '#c4713b';
                     ctx.font = "500 11px 'DM Mono', monospace";
-                    ctx.fillText('Optical', pX + 4, pY + 14);
+                    ctx.fillText(mode === 'geometric' ? 'Geometric' : 'Optical', pX + 4, pY + 14);
                 }
 
                 // Results
@@ -2345,13 +2363,14 @@
                 if (vOff !== 0) {
                     offInfo = `<div class="result-row"><span class="result-label">Custom offset</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(vOff))} ${vOff > 0 ? 'up' : 'down'}</span></div>`;
                 }
-                results.innerHTML = `<div class="section-label">Optical Placement</div>` + offInfo +
+                const modeLabel = mode === 'geometric' ? 'Geometric Placement' : 'Optical Placement';
+                results.innerHTML = `<div class="section-label">${modeLabel}</div>` + offInfo +
                     `<div class="result-row"><span class="result-label">Left</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(left))}</span></div>` +
                     `<div class="result-row"><span class="result-label">Right</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(right))}</span></div>` +
                     `<div class="result-row"><span class="result-label">Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(top))}</span></div>` +
                     `<div class="result-row"><span class="result-label">Bottom</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(bottom))}</span></div>` +
                     `<div class="result-row"><span class="result-label">Bottom − Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(diff))}</span></div>` +
-                    (showCenter ? `<div class="result-note">Geometric center comparison: ${fmtVal(fromMm(cy - top))} higher with optical centering</div>` : '');
+                    (showCenter ? `<div class="result-note">Difference between modes: ${fmtVal(fromMm(Math.abs(opticalY - geometricY)))} (optical sits higher)</div>` : '');
 
                 placementSave();
             };
@@ -2360,6 +2379,7 @@
                 try {
                     localStorage.setItem('darkroom_placement', JSON.stringify({
                         unit: getUnit(),
+                        mode: $('plc-mode').value,
                         mountWidth: $('plc-mountWidth').value,
                         mountHeight: $('plc-mountHeight').value,
                         printWidth: $('plc-printWidth').value,
@@ -2377,6 +2397,7 @@
                     if (!raw) return;
                     const p = JSON.parse(raw);
                     if (p.unit) $('plc-unit').value = p.unit;
+                    if (p.mode) $('plc-mode').value = p.mode;
                     if (p.mountWidth) $('plc-mountWidth').value = p.mountWidth;
                     if (p.mountHeight) $('plc-mountHeight').value = p.mountHeight;
                     if (p.printWidth) $('plc-printWidth').value = p.printWidth;
@@ -2402,6 +2423,7 @@
                 $(id).addEventListener('input', function () {storeInMm(id); placementDraw();});
             });
 
+            $('plc-mode').addEventListener('change', placementDraw);
             $('plc-showCenter').addEventListener('change', placementDraw);
             $('plc-showMarks').addEventListener('change', placementDraw);
 
