@@ -16,6 +16,11 @@
         href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap"
         rel="stylesheet">
     <style>
+        [hidden] { display: none !important; }
+        a { color: var(--amber-bright); }
+        a:focus-visible { outline: 2px solid var(--amber-bright); outline-offset: 3px; }
+        [id$="-error"]:empty { display: none; }
+        [id$="-error"] { color: var(--amber-bright); }
         :root {
             --bg: #1a1410;
             --bg-card: #221c16;
@@ -990,21 +995,21 @@
             <header>
                 <div class="brand">Darkroom Tools</div>
                 <h1>Exposure Time Calculator</h1>
-                <div class="subtitle"><span class="safelight"></span>Filter grade &amp; color head correction</div>
+                <div class="subtitle"><span class="safelight"></span>Estimated filter grade &amp; color head correction</div>
             </header>
 
             <div class="section">
                 <div class="section-label">Configuration</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Paper type</label>
+                        <label for="exp-paperType">Paper type</label>
                         <select id="exp-paperType">
                             <option value="foma">Foma</option>
                             <option value="ilford">Ilford</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Color head</label>
+                        <label for="exp-colorHeadType">Color head</label>
                         <select id="exp-colorHeadType">
                             <option value="meochrom1">Meochrom 1</option>
                             <option value="meochrom2" selected>Meochrom 2</option>
@@ -1017,21 +1022,21 @@
                 <div class="section-label">Current Settings</div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Filter grade</label>
+                        <label for="exp-existingFilterGrade">Filter grade</label>
                         <select id="exp-existingFilterGrade"></select>
                     </div>
                     <div class="input-group">
-                        <label>Yellow</label>
+                        <label for="exp-existingY">Yellow</label>
                         <input type="number" id="exp-existingY" value="0" min="0">
                     </div>
                     <div class="input-group">
-                        <label>Magenta</label>
+                        <label for="exp-existingM">Magenta</label>
                         <input type="number" id="exp-existingM" value="0" min="0">
                     </div>
                 </div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Exposure time (seconds)</label>
+                        <label for="exp-existingTime">Exposure time (seconds)</label>
                         <input type="number" id="exp-existingTime" value="10" step="0.01" min="0.1">
                     </div>
                 </div>
@@ -1041,15 +1046,15 @@
                 <div class="section-label">New Settings</div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Filter grade</label>
+                        <label for="exp-updatedFilterGrade">Filter grade</label>
                         <select id="exp-updatedFilterGrade"></select>
                     </div>
                     <div class="input-group">
-                        <label>Yellow</label>
+                        <label for="exp-updatedY">Yellow</label>
                         <input type="number" id="exp-updatedY" value="0" min="0">
                     </div>
                     <div class="input-group">
-                        <label>Magenta</label>
+                        <label for="exp-updatedM">Magenta</label>
                         <input type="number" id="exp-updatedM" value="0" min="0">
                     </div>
                 </div>
@@ -1065,6 +1070,8 @@
                 </div>
             </div>
 
+            <p class="instruction-note">Exposure factors are legacy estimates without a confirmed calibration source. Test at the final grade. Settings outside the available head data are unsupported. <a id="exp-source" href="https://www.foma.cz/en/fomaspeed-variant" target="_blank" rel="noopener">Paper filtration reference</a></p>
+            <p id="exp-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="result-section" id="exp-result-section">
                 <div class="section-label">Corrected Exposure</div>
                 <div class="result-row">
@@ -1112,7 +1119,7 @@
                 <div class="section-label">Parameters</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>F-stop step</label>
+                        <label for="fstop-step">F-stop step</label>
                         <select id="fstop-step">
                             <option value="0">1</option>
                             <option value="1">1/2</option>
@@ -1124,7 +1131,7 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Dry down</label>
+                        <label for="fstop-dryDown">Dry down</label>
                         <select id="fstop-dryDown">
                             <option value="0">0%</option>
                             <option value="0.05">5%</option>
@@ -1135,13 +1142,14 @@
                 </div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Base exposure time (seconds)</label>
+                        <label for="fstop-baseTime">Base exposure time (seconds)</label>
                         <input type="number" id="fstop-baseTime" value="10" step="0.01" min="0.1">
                     </div>
                 </div>
-                <p class="instruction-note">Click any time value to set it as the new base time.</p>
+                <p class="instruction-note">Click a time to center the table on it. Dry-down is applied once. Increments are additional exposures for a cumulative test strip.</p>
             </div>
 
+            <p id="fstop-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="section" id="fstop-table-wrap">
                 <div class="section-label">Timing Table</div>
                 <table class="fstop-table" id="fstop-table">
@@ -1173,14 +1181,15 @@
                 <div class="section-label">Configuration</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Negative type</label>
+                        <label for="enlg-negativeType">Negative type</label>
                         <select id="enlg-negativeType">
                             <option value="35mm">35mm</option>
-                            <option value="6x6">6x6 120mm</option>
+                            <option value="6x6">6×6 on 120 film</option>
+                            <option value="custom">Custom / cropped negative</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Units</label>
+                        <label for="enlg-unit">Units</label>
                         <select id="enlg-unit">
                             <option value="inches">Inches</option>
                             <option value="cm">Centimeters</option>
@@ -1191,24 +1200,27 @@
 
             <div class="section">
                 <div class="section-label">Print Dimensions</div>
+                <div class="input-row"><div class="input-group"><label for="enlg-negativeWidth">Negative image width (mm)</label><input id="enlg-negativeWidth" type="number" value="36" min="0.1" step="any"></div></div>
+                <p class="instruction-note">Use the negative image dimension corresponding to the print width, including any crop. Keep the lens aperture and filtration unchanged.</p>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Initial print width</label>
+                        <label for="enlg-initialWidth">Initial print width</label>
                         <input type="number" id="enlg-initialWidth" step="0.1" placeholder="Width">
                     </div>
                     <div class="input-group">
-                        <label>Target print width</label>
+                        <label for="enlg-targetWidth">Target print width</label>
                         <input type="number" id="enlg-targetWidth" step="0.1" placeholder="Width">
                     </div>
                 </div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Initial exposure time (s)</label>
+                        <label for="enlg-initialExposure">Initial exposure time (s)</label>
                         <input type="number" id="enlg-initialExposure" step="0.1" placeholder="Seconds">
                     </div>
                 </div>
             </div>
 
+            <p id="enlg-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="result-section" id="enlg-result-section">
                 <div class="section-label">Corrected Exposure</div>
                 <div class="result-row">
@@ -1336,6 +1348,7 @@
                         </div>
                     </div>
 
+                    <p id="plc-error" class="result-note" role="status" aria-live="polite"></p>
                     <div class="result-section" id="plc-results"></div>
                 </div>
 
@@ -1361,7 +1374,7 @@
                 <div class="section-label">Lens Selection</div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Focal length</label>
+                        <label for="nom-lens">Focal length</label>
                         <select id="nom-lens">
                             <option value="50">f = 50–55 mm</option>
                             <option value="80" selected>f = 75–80 mm</option>
@@ -1390,13 +1403,15 @@
 
             <div class="section">
                 <div class="section-label">Test Print Exposure</div>
+                <div class="input-row"><div class="input-group"><label for="nom-easel-height">Easel height above baseboard (cm)</label><input id="nom-easel-height" type="number" min="0" max="20" step="any" value="0"></div></div>
+                <p class="instruction-note">Enter zero if the column scale has already been adjusted for the easel. The corrected positions must remain within the chart range.</p>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Time (seconds)</label>
+                        <label for="nom-time">Time (seconds)</label>
                         <input type="number" id="nom-time" value="12.3" step="0.1" min="0.1">
                     </div>
                     <div class="input-group">
-                        <label>Test aperture</label>
+                        <label for="nom-aperture">Test aperture</label>
                         <select id="nom-aperture">
                             <option value="4">f/4</option>
                             <option value="5.6">f/5.6</option>
@@ -1408,7 +1423,7 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Target aperture</label>
+                        <label for="nom-target-aperture">Target aperture</label>
                         <select id="nom-target-aperture">
                             <option value="4">f/4</option>
                             <option value="5.6">f/5.6</option>
@@ -1429,6 +1444,7 @@
                 </div>
             </div>
 
+            <p id="nom-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="result-section" id="nom-result-section">
                 <div class="section-label">Corrected Exposure</div>
                 <div class="result-row">
@@ -1479,45 +1495,23 @@
                 <div class="chart-header">
                     <span class="chart-title" id="nom-chart-title">Nomogram — k vs. scale position (f = 75–80 mm)</span>
                     <button class="calibration-toggle" id="nom-cal-toggle"
-                        onclick="nomogramToggleCalibration()">Calibrate</button>
+                        onclick="nomogramToggleCalibration()">Reference points</button>
                 </div>
                 <canvas id="nom-chart" width="620" height="400"></canvas>
                 <div class="calibration-panel" id="nom-cal-panel">
-                    <div class="calibration-info">
-                        Adjust the <strong>r</strong> parameter if your measured corrections differ from the calculator.
-                        Defaults: r = 6.694 for 75–80 mm, r = 14.0 for 50–55 mm (derived from the manual nomograms).
-                        A higher r shifts curves right; lower shifts left. Switching lenses resets r to the default.
-                    </div>
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label>r parameter</label>
-                            <input type="number" id="nom-r-param" value="6.694" step="0.1" min="1" max="20">
-                        </div>
-                        <div class="input-group">
-                            <label>Verify: k at s₁→s₂</label>
-                            <input type="number" id="nom-verify-k" readonly tabindex="-1"
-                                style="color: var(--amber); border-color: transparent; background: transparent;">
-                        </div>
-                    </div>
+                    <div class="calibration-info">Approximate readings from the manual’s curves, interpolated between reference points. These are starting exposures; confirm with a test strip. Valid corrected scale ranges: 1–50 for 50–55 mm and 12–50 for 75–80 mm.</div>
+                    <div id="nom-reference-points" class="instruction-note"></div>
                 </div>
             </div>
-
             <div class="formula-section">
-                <div class="section-label" style="text-align:center;">Mathematical Model</div>
-                <div class="formula">
-                    k = ((r + s₂) / (r + s₁))²
-                </div>
-                <div class="formula-note">
-                    where r = <span id="nom-formula-r">6.694</span> for <span id="nom-formula-lens">f=75–80 mm</span> on
-                    Opemus 5<br>
-                    Derived from the inverse square law adapted to the inclined column geometry<br>
-                    s₁ = test position · s₂ = print position · k = time multiplier
-                </div>
+                <div class="section-label">Chart interpolation</div>
+                <div class="formula">k = C(s₁ − h) / C(s₂ − h)</div>
+                <div class="formula-note">C(s) is the manual’s approximate multiplier from scale s to 50.<br>h = easel height in cm. Exposure includes the squared aperture ratio.<br><a href="https://www.jollinger.com/photo/cam-coll/manuals/enlargers/misc/Opemus_5_manual.pdf" target="_blank" rel="noopener">Opemus 5 manual, pages 12–15</a></div>
             </div>
 
             <footer>
                 <p>
-                    Based on the Meopta Opemus 5 manual nomogram for f=75÷80 mm lenses.<br>
+                    Based on approximate readings of the Meopta Opemus 5 manual charts for both lens ranges.<br>
                     The correction assumes white light / standard filtration conditions.<br>
                     For thin negatives with heavy magenta filtration, test at final magnification.
                 </p>
@@ -1533,25 +1527,25 @@
             <header>
                 <div class="brand">Darkroom Tools</div>
                 <h1>Dilution Calculator</h1>
-                <div class="subtitle"><span class="safelight"></span>Weight-based mixing for darkroom chemistry</div>
+                <div class="subtitle"><span class="safelight"></span>Volume ratios with optional mixing weights</div>
             </header>
 
             <div class="section">
                 <div class="section-label">Chemical</div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Select chemical</label>
+                        <label for="dev-chemical">Select chemical</label>
                         <select id="dev-chemical">
                             <option value="custom">Custom</option>
                             <optgroup label="Developers">
-                                <option value="rodinal" selected>Rodinal / Adonal / R09</option>
+                                <option value="rodinal" selected>Rodinal / Adonal / R09 (check formulation)</option>
                                 <option value="hc110">Kodak HC-110</option>
                                 <option value="xtol">Kodak Xtol</option>
                                 <option value="d76">Kodak D-76</option>
                                 <option value="microphen">Ilford Microphen</option>
                                 <option value="id11">Ilford ID-11</option>
                                 <option value="perceptol">Ilford Perceptol</option>
-                                <option value="ddx">Ilford DDX</option>
+                                <option value="ddx">Ilford DD-X (2022 density reference)</option>
                                 <option value="fomadon_lqn">Foma Fomadon LQN</option>
                             </optgroup>
                             <optgroup label="Stop Bath">
@@ -1570,14 +1564,14 @@
                 <div class="dev-presets" id="dev-presets"></div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Parts concentrate</label>
+                        <label for="dev-partA">Parts concentrate</label>
                         <input type="number" id="dev-partA" value="1" min="1" step="1">
                     </div>
                     <div class="input-group" style="flex:0 0 auto; display:flex; align-items:flex-end; padding-bottom:0.6rem;">
                         <span style="color:var(--text-dim); font-size:1.1rem;">+</span>
                     </div>
                     <div class="input-group">
-                        <label>Parts water</label>
+                        <label for="dev-partB">Parts water</label>
                         <input type="number" id="dev-partB" value="50" min="0" step="1">
                     </div>
                 </div>
@@ -1587,23 +1581,24 @@
                 <div class="section-label">Parameters</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Total volume (ml)</label>
+                        <label for="dev-totalVol">Total volume (ml)</label>
                         <input type="number" id="dev-totalVol" value="500" min="1" step="10">
                     </div>
                     <div class="input-group">
-                        <label>Density (g/ml)</label>
-                        <input type="number" id="dev-density" value="1.13" min="0.8" max="2" step="0.01">
+                        <label for="dev-density">Density (g/ml)</label>
+                        <input type="number" id="dev-density" value="" min="0.01" step="any" placeholder="Measured density (optional)">
                     </div>
                 </div>
             </div>
 
+            <p id="dev-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="dev-dilution-display">
                 <span class="ratio" id="dev-ratioDisplay">1+50</span>
                 <span class="desc" id="dev-ratioDesc">1 part concentrate + 50 parts water</span>
             </div>
 
             <div class="result-section">
-                <div class="section-label">Results -- weigh on scale</div>
+                <div class="section-label">Mixing amounts</div>
                 <div class="dev-result-grid">
                     <div class="dev-result-card highlight">
                         <div class="label">Concentrate</div>
@@ -1621,7 +1616,7 @@
                     <span class="result-value" id="dev-totalWeight" style="font-size:1rem">501.3 g</span>
                 </div>
                 <div class="result-note" id="dev-note">
-                    <strong>Tip:</strong> Tare your vessel, weigh the concentrate first, then add water to reach the total. Density varies by batch -- weigh a known volume to calibrate.
+                    <span id="dev-density-note"></span> <a id="dev-density-source" hidden target="_blank" rel="noopener">Density reference</a><br>Ratios are by volume. For weights, use the density of your concentrate or prepared stock. Water mass assumes 20°C. Final mixed volume is approximate; for precise final volume, measure concentrate and top up to the volume mark.
                 </div>
             </div>
         </div>
@@ -1642,7 +1637,7 @@
                 <div class="section-label">Film &amp; Developer</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Film</label>
+                        <label for="dt-film">Film</label>
                         <select id="dt-film">
                             <option value="custom">Custom</option>
                             <optgroup label="Kodak">
@@ -1662,7 +1657,7 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Developer</label>
+                        <label for="dt-developer">Developer</label>
                         <select id="dt-developer">
                             <option value="custom">Custom</option>
                         </select>
@@ -1671,42 +1666,49 @@
             </div>
 
             <div class="section">
+                <div class="section-label">Development recipe</div>
+                <div class="input-row"><div class="input-group"><label for="dt-mode">Calculation mode</label><select id="dt-mode"><option value="recipe">Recipe</option><option value="custom">Custom estimate</option></select></div></div>
+                <div class="input-row" id="dt-recipe-row"><div class="input-group"><label for="dt-recipe">Recipe</label><select id="dt-recipe"></select></div></div>
+                <p id="dt-recipe-note" class="instruction-note"></p>
+                <p><a id="dt-recipe-source" hidden target="_blank" rel="noopener">Recipe source</a></p>
                 <div class="section-label">Base Development</div>
                 <div class="input-row compact">
                     <div class="input-group">
-                        <label>Time (minutes)</label>
+                        <label for="dt-baseTime">Time (minutes)</label>
                         <input type="number" id="dt-baseTime" value="8" min="0.1" step="0.5">
                     </div>
                     <div class="input-group">
-                        <label>Reference temp (C)</label>
+                        <label for="dt-refTemp">Reference temp (C)</label>
                         <input type="number" id="dt-refTemp" value="20" step="0.5">
                     </div>
                 </div>
                 <button class="btn" style="margin-top:0.75rem" onclick="devtimeReset()">Reset to defaults</button>
             </div>
 
-            <div class="section">
-                <div class="section-label">Push / Pull</div>
+            <div class="section" id="dt-pushpull-controls">
+                <div class="section-label">Push / Pull from the base time</div>
                 <div class="dev-presets" id="dt-pushpull-presets"></div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Compensation per stop (%)</label>
-                        <input type="number" id="dt-factor" value="33" min="1" max="100" step="1">
+                        <label for="dt-factor">Compensation per stop (%)</label>
+                        <input type="number" id="dt-factor" value="33" min="0" max="100" step="1">
                     </div>
                 </div>
-                <p class="instruction-note">Fallback factor when no verified time exists. 33% from Rollei datasheet. Shown as "estimated" in results.</p>
+                <p class="instruction-note">Generic estimate relative to your base time: 33% per stop is a starting assumption, not a verified recipe. Negative stops divide by the same factor.</p>
             </div>
 
             <div class="section">
                 <div class="section-label">Actual Temperature</div>
+                <div class="input-row"><div class="input-group"><label for="dt-temp-model">Temperature compensation</label><select id="dt-temp-model"><option value="ilford">Ilford chart (18–24°C)</option><option value="q10">Generic estimate (10–30°C)</option></select></div></div>
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Temperature (C)</label>
+                        <label for="dt-actualTemp">Temperature (C)</label>
                         <input type="number" id="dt-actualTemp" value="20" step="0.5">
                     </div>
                 </div>
             </div>
 
+            <p id="dt-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="result-section" id="dt-result-section">
                 <div class="section-label">Adjusted Development Time</div>
                 <div class="result-row">
@@ -1738,11 +1740,11 @@
             <div class="formula-section">
                 <div class="section-label" style="text-align:center;">Formulas</div>
                 <div class="formula">t_push = t_base x (1 + f/100)^N</div>
-                <div class="formula" style="margin-top:0.5rem">t_final = t_push x 2^((T_ref - T) / 10)</div>
+                <div class="formula" style="margin-top:0.5rem">Temperature: Ilford chart or generic Q10 estimate</div>
                 <div class="formula-note">
                     f = compensation factor per stop<br>
                     N = push (+) or pull (-) stops<br>
-                    Temperature model: Q10 = 2 (rate doubles per 10 C)
+                    Generic model only: t_final = t_push × 2^((T_ref − T) / 10)<br><a href="https://www.ilfordphoto.com/wp/wp-content/uploads/2017/03/Temperature-compensation-chart.pdf" target="_blank" rel="noopener">Ilford chart</a>: interpolation within published time and temperature limits
                 </div>
             </div>
         </div>
@@ -1751,1506 +1753,10 @@
     <!-- ============================================================ -->
     <!-- JAVASCRIPT                                                    -->
     <!-- ============================================================ -->
-    <script>
-        // ── Utility ──
-        const $ = id => document.getElementById(id);
-
-        // ── View switching ──
-        function switchView(name) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            $('view-' + name).classList.add('active');
-            document.querySelector(`.tab-btn[data-view="${name}"]`).classList.add('active');
-            localStorage.setItem('darkroom_active_view', name);
-            window.location.hash = name;
-
-            // Trigger canvas redraws after view is visible
-            if (name === 'nomogram') nomogramUpdate();
-            if (name === 'placement') placementDraw();
-        }
-
-        window.addEventListener('hashchange', function () {
-            const hash = window.location.hash.replace('#', '');
-            if (hash && $('view-' + hash)) switchView(hash);
-        });
-
-
-        // ================================================================
-        // TOOL 1: EXPOSURE TIME CALCULATOR
-        // ================================================================
-        (function () {
-            const FILTER_SETTINGS = {
-                foma: {
-                    "00": {Y: 90, M: 0}, "0": {Y: 60, M: 0}, "0.5": {Y: 45, M: 0},
-                    "1": {Y: 30, M: 0}, "1.5": {Y: 15, M: 0}, "2": {Y: 0, M: 10},
-                    "2.5": {Y: 0, M: 15}, "3": {Y: 0, M: 30}, "3.5": {Y: 0, M: 60},
-                    "4": {Y: 0, M: 100}, "4.5": {Y: 0, M: 140}, "5": {Y: 0, M: 180}
-                },
-                ilford: {
-                    "00": {Y: 150, M: 0}, "0": {Y: 90, M: 0}, "1": {Y: 55, M: 0},
-                    "2": {Y: 0, M: 0}, "3": {Y: 0, M: 40}, "4": {Y: 0, M: 85},
-                    "5": {Y: 0, M: 150}
-                }
-            };
-
-            const FILTERING_FACTORS = {
-                meochrom1: {
-                    0: [1, 1, 1], 10: [1.03, 1.10, 1.08], 20: [1.06, 1.20, 1.15], 30: [1.08, 1.26, 1.21],
-                    40: [1.10, 1.33, 1.25], 50: [1.12, 1.39, 1.30], 60: [1.13, 1.45, 1.34],
-                    70: [1.14, 1.50, 1.38], 80: [1.15, 1.55, 1.42], 90: [1.16, 1.60, 1.46],
-                    100: [1.17, 1.66, 1.50], 110: [1.18, 1.71, 1.54], 120: [1.18, 1.77, 1.57],
-                    130: [1.19, 1.82, 1.59], 140: [1.19, 1.88, 1.62], 150: [1.20, 1.93, 1.65]
-                },
-                meochrom2: {
-                    0: [1, 1, 1], 10: [1.05, 1.15, 1.09], 20: [1.10, 1.28, 1.17], 30: [1.14, 1.39, 1.24],
-                    40: [1.17, 1.50, 1.30], 50: [1.20, 1.60, 1.36], 60: [1.22, 1.69, 1.41],
-                    70: [1.24, 1.78, 1.46], 80: [1.25, 1.86, 1.51], 90: [1.26, 1.94, 1.56],
-                    100: [1.27, 2.01, 1.60], 110: [1.28, 2.08, 1.64], 120: [1.29, 2.14, 1.68],
-                    130: [1.29, 2.20, 1.72], 140: [1.30, 2.26, 1.75], 150: [1.30, 2.31, 1.78],
-                    160: [1.31, 2.36, 1.81], 170: [1.31, 2.41, 1.84], 180: [1.32, 2.45, 1.86]
-                }
-            };
-
-            function interpolate(factors, value, idx) {
-                const keys = Object.keys(factors).map(Number);
-                for (let i = 0; i < keys.length; i++) {
-                    if (value === keys[i]) return factors[value][idx];
-                    if (value < keys[i]) {
-                        const lo = keys[i - 1], hi = keys[i];
-                        return factors[lo][idx] + (value - lo) * (factors[hi][idx] - factors[lo][idx]) / (hi - lo);
-                    }
-                }
-                return factors[keys[keys.length - 1]][idx];
-            }
-
-            function loadFilterOptions(selId, paperType) {
-                const sel = $(selId);
-                sel.innerHTML = '';
-                const grades = Object.keys(FILTER_SETTINGS[paperType]).sort((a, b) => {
-                    if (a === "00") return -1; if (b === "00") return 1;
-                    return parseFloat(a) - parseFloat(b);
-                });
-                grades.forEach(g => {
-                    const o = document.createElement('option');
-                    o.value = g; o.textContent = 'Grade ' + g;
-                    sel.appendChild(o);
-                });
-                // Default to grade 2
-                const idx2 = grades.indexOf('2');
-                if (idx2 >= 0) sel.selectedIndex = idx2;
-            }
-
-            function applyFilterToInputs(selId) {
-                const grade = $(selId).value;
-                const paper = $('exp-paperType').value;
-                const fs = FILTER_SETTINGS[paper][grade];
-                if (!fs) return;
-                if (selId === 'exp-existingFilterGrade') {
-                    $('exp-existingY').value = fs.Y;
-                    $('exp-existingM').value = fs.M;
-                } else {
-                    $('exp-updatedY').value = fs.Y;
-                    $('exp-updatedM').value = fs.M;
-                }
-            }
-
-            function formatFStops(fStops) {
-                const STEPS = [1, 1 / 3, 1 / 12, 1 / 24];
-                const sign = fStops >= 0 ? '+' : '';
-                const abs = Math.abs(fStops);
-                let bestRepr = null, bestDiff = Infinity;
-                for (const step of STEPS) {
-                    const mult = Math.round(abs / step);
-                    const diff = Math.abs(abs - mult * step);
-                    if (diff < bestDiff && mult > 0) {
-                        bestDiff = diff;
-                        bestRepr = {step, mult};
-                    }
-                }
-                if (bestRepr && bestDiff < 0.001) {
-                    const {step, mult} = bestRepr;
-                    if (step === 1) return `${sign}${mult} f-stop${mult !== 1 ? 's' : ''}`;
-                    const den = Math.round(1 / step);
-                    if (mult === 1) return `${sign}1/${den} f-stop`;
-                    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-                    const d = gcd(mult, den);
-                    const sn = mult / d, sd = den / d;
-                    return sd === 1 ? `${sign}${sn} f-stop${sn !== 1 ? 's' : ''}` : `${sign}${sn}/${sd} f-stop`;
-                }
-                return `${sign}${abs.toFixed(3)} f-stops`;
-            }
-
-            window.exposureCalculate = function () {
-                const headType = $('exp-colorHeadType').value;
-                const factors = FILTERING_FACTORS[headType];
-                const eY = parseFloat($('exp-existingY').value) || 0;
-                const eM = parseFloat($('exp-existingM').value) || 0;
-                const nY = parseFloat($('exp-updatedY').value) || 0;
-                const nM = parseFloat($('exp-updatedM').value) || 0;
-                const time = parseFloat($('exp-existingTime').value) || 0;
-                if (time <= 0) {$('exp-updatedTime').textContent = '—'; $('exp-adjustment').textContent = '—'; return;}
-
-                const kYo = interpolate(factors, eY, 0), kMo = interpolate(factors, eM, 1);
-                const kYn = interpolate(factors, nY, 0), kMn = interpolate(factors, nM, 1);
-                const updated = time * (kYn / kYo) * (kMn / kMo);
-
-                const fStops = Math.log2(updated / time);
-                const rounded = Math.round(fStops * 24) / 24;
-
-                $('exp-updatedTime').textContent = updated.toFixed(2);
-                $('exp-adjustment').textContent = formatFStops(rounded);
-
-                // F-stop timer
-                const fstopMode = $('exp-fstop-mode').checked;
-                const fstopResult = $('exp-fstop-result');
-                if (fstopMode && time > 0) {
-                    fstopResult.classList.add('visible');
-                    const steps24 = Math.round(fStops * 24);
-                    const roundedStops = steps24 / 24;
-                    const roundedTime = time * Math.pow(2, roundedStops);
-                    const delta = roundedTime - updated;
-                    const sign = steps24 >= 0 ? '+' : '';
-                    const abs24 = Math.abs(steps24);
-                    const whole = Math.floor(abs24 / 24);
-                    const rem = abs24 % 24;
-                    let stepsStr;
-                    if (whole > 0 && rem > 0) stepsStr = `${sign}${whole} ${rem}/24`;
-                    else if (whole > 0) stepsStr = `${sign}${whole}`;
-                    else stepsStr = `${sign}${steps24}/24`;
-                    $('exp-fstop-steps').textContent = stepsStr;
-                    $('exp-fstop-rounded-time').textContent = roundedTime.toFixed(1);
-                    const dSign = delta >= 0 ? '+' : '';
-                    $('exp-fstop-detail').textContent = `Exact: ${updated.toFixed(1)}s → Rounded: ${roundedTime.toFixed(1)}s (Δ ${dSign}${delta.toFixed(2)}s) · ${steps24} steps of 1/24 stop`;
-                } else {
-                    fstopResult.classList.remove('visible');
-                }
-
-                exposureSave();
-            };
-
-            function exposureSave() {
-                try {
-                    localStorage.setItem('darkroom_exposure', JSON.stringify({
-                        paperType: $('exp-paperType').value,
-                        colorHeadType: $('exp-colorHeadType').value,
-                        existingFilterGrade: $('exp-existingFilterGrade').value,
-                        updatedFilterGrade: $('exp-updatedFilterGrade').value,
-                        existingY: $('exp-existingY').value,
-                        existingM: $('exp-existingM').value,
-                        existingTime: $('exp-existingTime').value,
-                        updatedY: $('exp-updatedY').value,
-                        updatedM: $('exp-updatedM').value,
-                        fstopMode: $('exp-fstop-mode').checked
-                    }));
-                } catch (e) { }
-            }
-
-            function exposureLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_exposure');
-                    if (!raw) return null;
-                    return JSON.parse(raw);
-                } catch (e) {return null;}
-            }
-
-            // Init
-            const saved = exposureLoad();
-            if (saved && saved.paperType) $('exp-paperType').value = saved.paperType;
-            if (saved && saved.colorHeadType) $('exp-colorHeadType').value = saved.colorHeadType;
-
-            loadFilterOptions('exp-existingFilterGrade', $('exp-paperType').value);
-            loadFilterOptions('exp-updatedFilterGrade', $('exp-paperType').value);
-
-            if (saved) {
-                if (saved.existingFilterGrade) $('exp-existingFilterGrade').value = saved.existingFilterGrade;
-                if (saved.updatedFilterGrade) $('exp-updatedFilterGrade').value = saved.updatedFilterGrade;
-                if (saved.existingY) $('exp-existingY').value = saved.existingY;
-                if (saved.existingM) $('exp-existingM').value = saved.existingM;
-                if (saved.existingTime) $('exp-existingTime').value = saved.existingTime;
-                if (saved.updatedY) $('exp-updatedY').value = saved.updatedY;
-                if (saved.updatedM) $('exp-updatedM').value = saved.updatedM;
-                if (saved.fstopMode) $('exp-fstop-mode').checked = saved.fstopMode;
-            } else {
-                applyFilterToInputs('exp-existingFilterGrade');
-                applyFilterToInputs('exp-updatedFilterGrade');
-            }
-
-            // Events
-            $('exp-fstop-mode').addEventListener('change', exposureCalculate);
-            $('exp-paperType').addEventListener('change', function () {
-                loadFilterOptions('exp-existingFilterGrade', this.value);
-                loadFilterOptions('exp-updatedFilterGrade', this.value);
-                applyFilterToInputs('exp-existingFilterGrade');
-                applyFilterToInputs('exp-updatedFilterGrade');
-                exposureCalculate();
-            });
-            $('exp-colorHeadType').addEventListener('change', exposureCalculate);
-            $('exp-existingFilterGrade').addEventListener('change', function () {
-                applyFilterToInputs('exp-existingFilterGrade');
-                exposureCalculate();
-            });
-            $('exp-updatedFilterGrade').addEventListener('change', function () {
-                applyFilterToInputs('exp-updatedFilterGrade');
-                exposureCalculate();
-            });
-            ['exp-existingY', 'exp-existingM', 'exp-existingTime', 'exp-updatedY', 'exp-updatedM'].forEach(id => {
-                $(id).addEventListener('input', exposureCalculate);
-            });
-
-            exposureCalculate();
-        })();
-
-
-        // ================================================================
-        // TOOL 2: F-STOP TIMING TABLE
-        // ================================================================
-        (function () {
-            const FSTOP_STEPS = [1, 1 / 2, 1 / 3, 1 / 4, 1 / 6, 1 / 12, 1 / 24];
-            const EV = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6];
-
-            function calcTime(ev, step, base) {return base * Math.pow(2, ev * step);}
-
-            function formatFrac(ev, step) {
-                if (step === 1) return ev.toString();
-                if (ev === 0) return "0";
-                const den = Math.round(1 / step);
-                return `${ev}/${den}`;
-            }
-
-            window.fstopSetBaseTime = function (time) {
-                $('fstop-baseTime').value = Number.isInteger(time) ? time : time.toFixed(2);
-                fstopCalculate();
-            };
-
-            window.fstopCalculate = function () {
-                const stepIdx = parseInt($('fstop-step').value);
-                const step = FSTOP_STEPS[stepIdx];
-                const base = parseFloat($('fstop-baseTime').value) || 10;
-                const dryDown = parseFloat($('fstop-dryDown').value) || 0;
-                const adjusted = base * (1 - dryDown);
-
-                const tbody = $('fstop-tbody');
-                tbody.innerHTML = '';
-
-                EV.forEach(ev => {
-                    const time = calcTime(ev, step, adjusted);
-                    const inc = ev === EV[0] ? time : (time - calcTime(ev - 1, step, adjusted));
-                    const timeFmt = Number.isInteger(time) ? time.toString() : time.toFixed(2);
-                    const incFmt = Number.isInteger(inc) ? inc.toString() : inc.toFixed(2);
-
-                    const tr = document.createElement('tr');
-                    if (ev === 0) tr.className = 'row-zero';
-                    else if (ev < 0) tr.className = 'row-negative';
-                    tr.innerHTML = `<td>${formatFrac(ev, step)}</td>` +
-                        `<td><a href="#" class="time-link" onclick="fstopSetBaseTime(${time}); return false;">${timeFmt}</a></td>` +
-                        `<td>${incFmt}</td>`;
-                    tbody.appendChild(tr);
-                });
-
-                fstopSave();
-            };
-
-            function fstopSave() {
-                try {
-                    localStorage.setItem('darkroom_fstop', JSON.stringify({
-                        step: $('fstop-step').value,
-                        dryDown: $('fstop-dryDown').value,
-                        baseTime: $('fstop-baseTime').value
-                    }));
-                } catch (e) { }
-            }
-
-            function fstopLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_fstop');
-                    if (!raw) return;
-                    const p = JSON.parse(raw);
-                    if (p.step) $('fstop-step').value = p.step;
-                    if (p.dryDown) $('fstop-dryDown').value = p.dryDown;
-                    if (p.baseTime) $('fstop-baseTime').value = p.baseTime;
-                } catch (e) { }
-            }
-
-            fstopLoad();
-
-            $('fstop-step').addEventListener('change', fstopCalculate);
-            $('fstop-dryDown').addEventListener('change', fstopCalculate);
-            $('fstop-baseTime').addEventListener('input', fstopCalculate);
-
-            fstopCalculate();
-        })();
-
-
-        // ================================================================
-        // TOOL 3: ENLARGER EXPOSURE CALCULATOR
-        // ================================================================
-        (function () {
-            const NEG_SIZES = {'35mm': 1.42, '6x6': 2.35}; // inches
-
-            window.enlargerCalculate = function () {
-                const unit = $('enlg-unit').value;
-                const negType = $('enlg-negativeType').value;
-                const iw = parseFloat($('enlg-initialWidth').value);
-                const tw = parseFloat($('enlg-targetWidth').value);
-                const ie = parseFloat($('enlg-initialExposure').value);
-
-                if (isNaN(iw) || isNaN(tw) || isNaN(ie) || iw <= 0 || tw <= 0 || ie <= 0) {
-                    $('enlg-m1').textContent = '—';
-                    $('enlg-m2').textContent = '—';
-                    $('enlg-targetExposure').textContent = '—';
-                    return;
-                }
-
-                const negSize = NEG_SIZES[negType];
-                const iwIn = unit === 'cm' ? iw / 2.54 : iw;
-                const twIn = unit === 'cm' ? tw / 2.54 : tw;
-                const m1 = iwIn / negSize;
-                const m2 = twIn / negSize;
-                const te = ie * Math.pow((m2 + 1) / (m1 + 1), 2);
-
-                $('enlg-m1').textContent = m1.toFixed(2) + '×';
-                $('enlg-m2').textContent = m2.toFixed(2) + '×';
-                $('enlg-targetExposure').textContent = te.toFixed(2);
-                enlargerSave();
-            };
-
-            function enlargerSave() {
-                try {
-                    localStorage.setItem('darkroom_enlarger', JSON.stringify({
-                        unit: $('enlg-unit').value,
-                        negativeType: $('enlg-negativeType').value,
-                        initialWidth: $('enlg-initialWidth').value,
-                        targetWidth: $('enlg-targetWidth').value,
-                        initialExposure: $('enlg-initialExposure').value
-                    }));
-                } catch (e) { }
-            }
-
-            function enlargerLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_enlarger');
-                    if (!raw) return;
-                    const p = JSON.parse(raw);
-                    if (p.unit) $('enlg-unit').value = p.unit;
-                    if (p.negativeType) $('enlg-negativeType').value = p.negativeType;
-                    if (p.initialWidth) $('enlg-initialWidth').value = p.initialWidth;
-                    if (p.targetWidth) $('enlg-targetWidth').value = p.targetWidth;
-                    if (p.initialExposure) $('enlg-initialExposure').value = p.initialExposure;
-                } catch (e) { }
-            }
-
-            enlargerLoad();
-
-            ['enlg-negativeType', 'enlg-unit', 'enlg-initialWidth', 'enlg-targetWidth', 'enlg-initialExposure'].forEach(id => {
-                $(id).addEventListener('input', enlargerCalculate);
-                $(id).addEventListener('change', enlargerCalculate);
-            });
-
-            enlargerCalculate();
-        })();
-
-
-        // ================================================================
-        // TOOL 4: OPTICAL PRINT PLACEMENT
-        // ================================================================
-        (function () {
-            const MM_PER_INCH = 25.4;
-            let previewImage = null;
-
-            function getUnit() {return $('plc-unit').value;}
-            function toMm(v) {return getUnit() === 'in' ? v * MM_PER_INCH : v;}
-            function fromMm(v) {return getUnit() === 'in' ? v / MM_PER_INCH : v;}
-            function fmtVal(v) {
-                return getUnit() === 'in' ? v.toFixed(2) + ' in' : v.toFixed(0) + ' mm';
-            }
-
-            function updateLabels() {
-                const u = getUnit() === 'in' ? 'in' : 'mm';
-                $('plc-mountWidthLabel').textContent = `Width (${u})`;
-                $('plc-mountHeightLabel').textContent = `Height (${u})`;
-                $('plc-printWidthLabel').textContent = `Width (${u})`;
-                $('plc-printHeightLabel').textContent = `Height (${u})`;
-                $('plc-offsetLabel').textContent = `Vertical offset (${u})`;
-            }
-
-            function storeInMm(id) {
-                const el = $(id);
-                const v = parseFloat(el.value);
-                if (!isNaN(v) && (v > 0 || id === 'plc-verticalOffset')) {
-                    el.dataset.mmValue = toMm(v);
-                }
-            }
-
-            function convertInputs(toUnit) {
-                ['plc-mountWidth', 'plc-mountHeight', 'plc-printWidth', 'plc-printHeight', 'plc-verticalOffset'].forEach(id => {
-                    const el = $(id);
-                    const mm = parseFloat(el.dataset.mmValue);
-                    if (!isNaN(mm)) {
-                        el.value = toUnit === 'in'
-                            ? (mm / MM_PER_INCH).toFixed(3)
-                            : (id === 'plc-verticalOffset' ? mm.toFixed(1) : Math.round(mm));
-                    }
-                });
-            }
-
-            function initStoredValues() {
-                ['plc-mountWidth', 'plc-mountHeight', 'plc-printWidth', 'plc-printHeight', 'plc-verticalOffset'].forEach(storeInMm);
-            }
-
-            function loadImage(file) {
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const img = new Image();
-                    img.onload = function () {
-                        previewImage = img;
-                        $('plc-clearImageBtn').style.display = 'block';
-                        placementDraw();
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-
-            window.placementClearImage = function () {
-                previewImage = null;
-                $('plc-imageUpload').value = '';
-                $('plc-clearImageBtn').style.display = 'none';
-                placementDraw();
-            };
-
-            window.placementFlip = function () {
-                const fields = [['plc-mountWidth', 'plc-mountHeight'], ['plc-printWidth', 'plc-printHeight']];
-                fields.forEach(([a, b]) => {
-                    const ea = $(a), eb = $(b);
-                    const tv = ea.value, tm = ea.dataset.mmValue;
-                    ea.value = eb.value; ea.dataset.mmValue = eb.dataset.mmValue;
-                    eb.value = tv; eb.dataset.mmValue = tm;
-                });
-                placementDraw();
-            };
-
-            window.placementDraw = function () {
-                const Mx = toMm(parseFloat($('plc-mountWidth').value));
-                const My = toMm(parseFloat($('plc-mountHeight').value));
-                const Px = toMm(parseFloat($('plc-printWidth').value));
-                const Py = toMm(parseFloat($('plc-printHeight').value));
-                const offIn = parseFloat($('plc-verticalOffset').value);
-                const vOff = toMm(isNaN(offIn) ? 0 : offIn);
-                const mode = $('plc-mode').value;
-                const showCenter = $('plc-showCenter').checked;
-                const showMarks = $('plc-showMarks').checked;
-
-                const results = $('plc-results');
-
-                if (isNaN(Mx) || isNaN(My) || isNaN(Px) || isNaN(Py) || Mx <= 0 || My <= 0 || Px <= 0 || Py <= 0) {
-                    results.innerHTML = '<div class="section-label">Results</div><div class="result-note">Enter valid positive dimensions.</div>';
-                    return;
-                }
-                if (Px >= Mx || Py >= My) {
-                    results.innerHTML = '<div class="section-label">Results</div><div class="result-note">Print must be smaller than mount.</div>';
-                    return;
-                }
-
-                const x = Math.round((Mx - Px) / 2);
-                const opticalY = Math.round(((Mx + Px) * (My - Py)) / (4 * Mx));
-                const geometricY = Math.round((My - Py) / 2);
-                const baseY = mode === 'geometric' ? geometricY : opticalY;
-                const y = baseY - vOff;
-                const left = x, right = Mx - Px - x;
-                const top = y, bottom = My - Py - y;
-                // Alternative (the other mode), for comparison overlay
-                const altY = mode === 'geometric' ? opticalY : geometricY;
-                const altX = (Mx - Px) / 2;
-
-                const canvas = $('plc-canvas');
-                const ctx = canvas.getContext('2d');
-                const dpr = window.devicePixelRatio || 1;
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
-                ctx.scale(dpr, dpr);
-                const W = rect.width, H = rect.height;
-                ctx.clearRect(0, 0, W, H);
-
-                const padT = 40, padB = 60, padL = 60, padR = 100;
-                const aW = W - padL - padR, aH = H - padT - padB;
-                const sc = Math.min(aW / Mx, aH / My);
-                const mW = Mx * sc, mH = My * sc, pW = Px * sc, pH = Py * sc;
-                const oX = padL + (aW - mW) / 2, oY = padT + (aH - mH) / 2;
-
-                // Mount
-                ctx.fillStyle = '#e8e8e8';
-                ctx.fillRect(oX, oY, mW, mH);
-                ctx.strokeStyle = 'rgba(61,50,40,0.5)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(oX, oY, mW, mH);
-
-                const pX = oX + x * sc, pY = oY + y * sc;
-
-                // Preview image or color fill
-                if (previewImage) {
-                    const iA = previewImage.width / previewImage.height;
-                    const pA = pW / pH;
-                    let dW, dH, dX, dY;
-                    if (iA > pA) {dW = pW; dH = pW / iA; dX = pX; dY = pY;}
-                    else {dH = pH; dW = pH * iA; dX = pX + (pW - dW) / 2; dY = pY;}
-                    ctx.drawImage(previewImage, dX, dY, dW, dH);
-                } else {
-                    ctx.fillStyle = 'rgba(196,113,59,0.5)';
-                    ctx.fillRect(pX, pY, pW, pH);
-                }
-
-                if (!previewImage || showMarks) {
-                    ctx.strokeStyle = '#c4713b';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(pX, pY, pW, pH);
-                }
-
-                // Alternative placement overlay (the other mode)
-                if (showCenter) {
-                    const cpX = oX + altX * sc, cpY = oY + altY * sc;
-                    ctx.strokeStyle = '#5a8fb8';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([8, 4]);
-                    ctx.strokeRect(cpX, cpY, pW, pH);
-                    ctx.setLineDash([]);
-                    if (!previewImage || showMarks) {
-                        ctx.fillStyle = '#5a8fb8';
-                        ctx.font = "500 11px 'DM Mono', monospace";
-                        ctx.fillText(mode === 'geometric' ? 'Optical' : 'Geometric', cpX + 4, cpY + 14);
-                    }
-                }
-
-                // Measurement marks
-                if (showMarks) {
-                    ctx.strokeStyle = 'rgba(138,125,107,0.5)';
-                    ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 3]);
-                    // Top
-                    ctx.beginPath(); ctx.moveTo(oX - 8, pY); ctx.lineTo(oX + mW + 8, pY); ctx.stroke();
-                    // Bottom
-                    ctx.beginPath(); ctx.moveTo(oX - 8, pY + pH); ctx.lineTo(oX + mW + 8, pY + pH); ctx.stroke();
-                    // Left
-                    ctx.beginPath(); ctx.moveTo(pX, oY - 8); ctx.lineTo(pX, oY + mH + 8); ctx.stroke();
-                    // Right
-                    ctx.beginPath(); ctx.moveTo(pX + pW, oY - 8); ctx.lineTo(pX + pW, oY + mH + 8); ctx.stroke();
-                    ctx.setLineDash([]);
-
-                    ctx.fillStyle = '#c4713b';
-                    ctx.font = "500 11px 'DM Mono', monospace";
-                    ctx.fillText('Top: ' + fmtVal(fromMm(top)), oX + mW + 8, pY + 5);
-                    ctx.fillText('Bottom: ' + fmtVal(fromMm(bottom)), oX + mW + 8, pY + pH + 5);
-                    ctx.fillText('Left: ' + fmtVal(fromMm(left)), pX + 4, oY + mH + 18);
-                    ctx.fillText('Right: ' + fmtVal(fromMm(right)), pX + pW - 60, oY + mH + 18);
-
-                    // Center dots
-                    ctx.fillStyle = '#c4713b';
-                    ctx.beginPath(); ctx.arc(oX + mW / 2, oY + mH / 2, 3, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#f5a862';
-                    ctx.beginPath(); ctx.arc(pX + pW / 2, pY + pH / 2, 3, 0, Math.PI * 2); ctx.fill();
-                }
-
-                if (!previewImage || showMarks) {
-                    ctx.fillStyle = '#c4713b';
-                    ctx.font = "500 11px 'DM Mono', monospace";
-                    ctx.fillText(mode === 'geometric' ? 'Geometric' : 'Optical', pX + 4, pY + 14);
-                }
-
-                // Results
-                const diff = bottom - top;
-                let offInfo = '';
-                if (vOff !== 0) {
-                    offInfo = `<div class="result-row"><span class="result-label">Custom offset</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(vOff))} ${vOff > 0 ? 'up' : 'down'}</span></div>`;
-                }
-                const modeLabel = mode === 'geometric' ? 'Geometric Placement' : 'Optical Placement';
-                results.innerHTML = `<div class="section-label">${modeLabel}</div>` + offInfo +
-                    `<div class="result-row"><span class="result-label">Left</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(left))}</span></div>` +
-                    `<div class="result-row"><span class="result-label">Right</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(right))}</span></div>` +
-                    `<div class="result-row"><span class="result-label">Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(top))}</span></div>` +
-                    `<div class="result-row"><span class="result-label">Bottom</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(bottom))}</span></div>` +
-                    `<div class="result-row"><span class="result-label">Bottom − Top</span><span class="result-value" style="font-size:1rem">${fmtVal(fromMm(diff))}</span></div>` +
-                    (showCenter ? `<div class="result-note">Difference between modes: ${fmtVal(fromMm(Math.abs(opticalY - geometricY)))} (optical sits higher)</div>` : '');
-
-                placementSave();
-            };
-
-            function placementSave() {
-                try {
-                    localStorage.setItem('darkroom_placement', JSON.stringify({
-                        unit: getUnit(),
-                        mode: $('plc-mode').value,
-                        mountWidth: $('plc-mountWidth').value,
-                        mountHeight: $('plc-mountHeight').value,
-                        printWidth: $('plc-printWidth').value,
-                        printHeight: $('plc-printHeight').value,
-                        verticalOffset: $('plc-verticalOffset').value,
-                        showCenter: $('plc-showCenter').checked,
-                        showMarks: $('plc-showMarks').checked
-                    }));
-                } catch (e) { }
-            }
-
-            function placementLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_placement');
-                    if (!raw) return;
-                    const p = JSON.parse(raw);
-                    if (p.unit) $('plc-unit').value = p.unit;
-                    if (p.mode) $('plc-mode').value = p.mode;
-                    if (p.mountWidth) $('plc-mountWidth').value = p.mountWidth;
-                    if (p.mountHeight) $('plc-mountHeight').value = p.mountHeight;
-                    if (p.printWidth) $('plc-printWidth').value = p.printWidth;
-                    if (p.printHeight) $('plc-printHeight').value = p.printHeight;
-                    if (p.verticalOffset !== undefined) $('plc-verticalOffset').value = p.verticalOffset;
-                    if (p.showCenter !== undefined) $('plc-showCenter').checked = p.showCenter;
-                    if (p.showMarks !== undefined) $('plc-showMarks').checked = p.showMarks;
-                } catch (e) { }
-            }
-
-            placementLoad();
-            initStoredValues();
-            updateLabels();
-
-            // Events
-            $('plc-unit').addEventListener('change', function () {
-                convertInputs(getUnit());
-                updateLabels();
-                placementDraw();
-            });
-
-            ['plc-mountWidth', 'plc-mountHeight', 'plc-printWidth', 'plc-printHeight', 'plc-verticalOffset'].forEach(id => {
-                $(id).addEventListener('input', function () {storeInMm(id); placementDraw();});
-            });
-
-            $('plc-mode').addEventListener('change', placementDraw);
-            $('plc-showCenter').addEventListener('change', placementDraw);
-            $('plc-showMarks').addEventListener('change', placementDraw);
-
-            $('plc-imageUpload').addEventListener('change', function (e) {
-                if (e.target.files && e.target.files[0]) loadImage(e.target.files[0]);
-            });
-
-            // Drag & drop
-            const cvs = $('plc-canvas');
-            cvs.addEventListener('dragover', function (e) {e.preventDefault(); cvs.classList.add('drag-over');});
-            cvs.addEventListener('dragenter', function (e) {e.preventDefault(); cvs.classList.add('drag-over');});
-            cvs.addEventListener('dragleave', function (e) {e.preventDefault(); cvs.classList.remove('drag-over');});
-            cvs.addEventListener('drop', function (e) {
-                e.preventDefault(); cvs.classList.remove('drag-over');
-                const files = e.dataTransfer.files;
-                if (files && files.length > 0 && files[0].type.startsWith('image/')) loadImage(files[0]);
-            });
-
-            // Only draw if view is visible (switchView will trigger draw otherwise)
-            if ($('view-placement').classList.contains('active')) placementDraw();
-        })();
-
-
-        // ================================================================
-        // TOOL 5: OPEMUS 5 NOMOGRAM
-        // ================================================================
-        (function () {
-            const LENS_CONFIG = {
-                '50': {r: 14.0, sMin: 1, sMax: 50, kMin: 0.02, kMax: 35, curves: [1, 2, 4, 6, 8, 10, 20, 30, 40, 50], label: 'f = 50–55 mm'},
-                '80': {r: 6.694, sMin: 12, sMax: 50, kMin: 0.1, kMax: 15, curves: [13, 16, 18, 20, 22, 25, 30, 35, 40, 45, 50], label: 'f = 75–80 mm'}
-            };
-
-            let R = 6.694;
-
-            function calcK(s1, s2, r) {return Math.pow((r + s2) / (r + s1), 2);}
-            function stopsFromK(k) {return Math.log2(k);}
-            function fmtStops(stops) {return `${stops >= 0 ? '+' : ''}${stops.toFixed(1)} stops`;}
-
-            function updateSliderRanges() {
-                const cfg = LENS_CONFIG[$('nom-lens').value];
-                $('nom-s1').min = cfg.sMin; $('nom-s1').max = cfg.sMax;
-                $('nom-s2').min = cfg.sMin; $('nom-s2').max = cfg.sMax;
-                let s1 = parseFloat($('nom-s1').value), s2 = parseFloat($('nom-s2').value);
-                if (s1 < cfg.sMin) $('nom-s1').value = cfg.sMin;
-                if (s1 > cfg.sMax) $('nom-s1').value = cfg.sMax;
-                if (s2 < cfg.sMin) $('nom-s2').value = cfg.sMin;
-                if (s2 > cfg.sMax) $('nom-s2').value = cfg.sMax;
-                $('nom-r-param').value = cfg.r;
-            }
-
-            window.nomogramUpdate = function () {
-                const s1 = parseFloat($('nom-s1').value);
-                const s2 = parseFloat($('nom-s2').value);
-                const time = parseFloat($('nom-time').value) || 0;
-                const aperture = parseFloat($('nom-aperture').value);
-                const targetAperture = parseFloat($('nom-target-aperture').value);
-                R = parseFloat($('nom-r-param').value) || 6.694;
-
-                $('nom-s1-display').textContent = s1 % 1 === 0 ? s1 : s1.toFixed(1);
-                $('nom-s2-display').textContent = s2 % 1 === 0 ? s2 : s2.toFixed(1);
-
-                const k = calcK(s1, s2, R);
-                const apertureStops = 2 * Math.log2(aperture / targetAperture);
-                const apertureFactor = Math.pow(2, -apertureStops);
-                const correctedTime = time * k * apertureFactor;
-                const totalStops = stopsFromK(k) - apertureStops;
-
-                $('nom-k-value').textContent = k.toFixed(3);
-                $('nom-corrected-time').textContent = correctedTime.toFixed(1);
-                $('nom-result-aperture').textContent = `f/${targetAperture}`;
-                $('nom-stops-badge').textContent = fmtStops(totalStops);
-                $('nom-verify-k').value = k.toFixed(4);
-                $('nom-formula-r').textContent = R.toFixed(3);
-                $('nom-formula-lens').textContent = LENS_CONFIG[$('nom-lens').value].label;
-                $('nom-chart-title').textContent = `Nomogram — k vs. scale position (${LENS_CONFIG[$('nom-lens').value].label})`;
-
-                const apNote = aperture !== targetAperture
-                    ? ` Aperture changed by ${Math.abs(apertureStops).toFixed(1)} stop${Math.abs(apertureStops) !== 1 ? 's' : ''} (${apertureStops > 0 ? 'opened' : 'stopped down'}).`
-                    : '';
-
-                if (correctedTime > 120) {
-                    const sugF = targetAperture / 1.414;
-                    $('nom-result-note').innerHTML = `<strong>Long exposure.</strong> Consider opening the lens. At f/${sugF.toFixed(1)} the time would be ~${(correctedTime / 2).toFixed(1)}s.${apNote}`;
-                } else if (correctedTime < 3 && time > 0) {
-                    $('nom-result-note').textContent = 'Short exposure — consider stopping down.' + apNote;
-                } else {
-                    $('nom-result-note').textContent = apNote || 'Same aperture. If the time is impractically long, open up the target aperture.';
-                }
-
-                // F-stop timer
-                const fstopMode = $('nom-fstop-mode').checked;
-                const fstopResult = $('nom-fstop-result');
-                if (fstopMode && time > 0) {
-                    fstopResult.classList.add('visible');
-                    const steps24 = Math.round(totalStops * 24);
-                    const roundedStops = steps24 / 24;
-                    const roundedTime = time * Math.pow(2, roundedStops);
-                    const delta = roundedTime - correctedTime;
-                    const sign = steps24 >= 0 ? '+' : '';
-                    const abs24 = Math.abs(steps24);
-                    const whole = Math.floor(abs24 / 24);
-                    const rem = abs24 % 24;
-                    let stepsStr;
-                    if (whole > 0 && rem > 0) stepsStr = `${sign}${whole} ${rem}/24`;
-                    else if (whole > 0) stepsStr = `${sign}${whole}`;
-                    else stepsStr = `${sign}${steps24}/24`;
-                    $('nom-fstop-steps').textContent = stepsStr;
-                    $('nom-fstop-rounded-time').textContent = roundedTime.toFixed(1);
-                    const dSign = delta >= 0 ? '+' : '';
-                    $('nom-fstop-detail').textContent = `Exact: ${correctedTime.toFixed(1)}s → Rounded: ${roundedTime.toFixed(1)}s (Δ ${dSign}${delta.toFixed(2)}s) · ${steps24} steps of 1/24 stop`;
-                } else {
-                    fstopResult.classList.remove('visible');
-                }
-
-                nomogramSave();
-                nomogramDrawChart(s1, s2, k);
-            };
-
-            function nomogramDrawChart(activS1, activS2, activK) {
-                const lens = $('nom-lens').value;
-                const cfg = LENS_CONFIG[lens];
-                const canvas = $('nom-chart');
-                const dpr = window.devicePixelRatio || 1;
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
-                const ctx = canvas.getContext('2d');
-                ctx.scale(dpr, dpr);
-                const W = rect.width, H = rect.height;
-
-                const pad = {top: 20, right: 45, bottom: 35, left: 50};
-                const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
-                const sMin = cfg.sMin, sMax = cfg.sMax;
-                const kMin = cfg.kMin, kMax = cfg.kMax;
-                const logKMin = Math.log10(kMin), logKMax = Math.log10(kMax);
-
-                function xPos(s) {return pad.left + (s - sMin) / (sMax - sMin) * cw;}
-                function yPos(k) {
-                    const lk = Math.log10(Math.max(k, 0.001));
-                    return pad.top + ch - (lk - logKMin) / (logKMax - logKMin) * ch;
-                }
-
-                ctx.fillStyle = '#1a1410';
-                ctx.fillRect(0, 0, W, H);
-
-                // Grid - H
-                const kGridAll = [0.02, 0.03, 0.04, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 35];
-                const kGridVals = kGridAll.filter(v => v >= kMin && v <= kMax);
-                const kLabelAll = [0.02, 0.03, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1, 2, 3, 5, 10, 15, 20, 30, 35];
-                const kLabelVals = kLabelAll.filter(v => v >= kMin && v <= kMax);
-
-                ctx.strokeStyle = 'rgba(61,50,40,0.4)';
-                ctx.lineWidth = 0.5;
-                kGridVals.forEach(kv => {
-                    const y = yPos(kv);
-                    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-                });
-
-                // Grid - V
-                let sGridVals = sMin <= 1 ? [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50] : [12, 15, 20, 25, 30, 35, 40, 45, 50];
-                sGridVals = sGridVals.filter(v => v >= sMin && v <= sMax);
-                sGridVals.forEach(sv => {
-                    const x = xPos(sv);
-                    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
-                });
-
-                // K=1 ref
-                if (kMin <= 1 && kMax >= 1) {
-                    ctx.strokeStyle = 'rgba(196,113,59,0.2)'; ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.moveTo(pad.left, yPos(1)); ctx.lineTo(W - pad.right, yPos(1)); ctx.stroke();
-                }
-
-                // Curves
-                const isActive = tp => Math.abs(tp - activS1) < 0.5;
-                cfg.curves.forEach(tp => {
-                    const active = isActive(tp);
-                    ctx.strokeStyle = active ? '#c4713b' : 'rgba(212,196,168,0.18)';
-                    ctx.lineWidth = active ? 2 : 1;
-                    ctx.beginPath();
-                    let first = true;
-                    for (let s = sMin; s <= sMax; s += 0.25) {
-                        const k = calcK(tp, s, R);
-                        if (k < kMin || k > kMax) continue;
-                        if (first) {ctx.moveTo(xPos(s), yPos(k)); first = false;}
-                        else ctx.lineTo(xPos(s), yPos(k));
-                    }
-                    ctx.stroke();
-                    const labelK = calcK(tp, sMax, R);
-                    if (labelK <= kMax && labelK >= kMin) {
-                        ctx.fillStyle = active ? '#c4713b' : 'rgba(138,125,107,0.5)';
-                        ctx.font = `${active ? '500' : '300'} ${active ? '11px' : '9px'} 'DM Mono', monospace`;
-                        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                        ctx.fillText(tp, W - pad.right + 4, yPos(labelK));
-                    }
-                });
-
-                // Active point
-                if (activK >= kMin && activK <= kMax) {
-                    const px = xPos(activS2), py = yPos(activK);
-                    ctx.strokeStyle = 'rgba(196,113,59,0.3)'; ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 4]);
-                    ctx.beginPath(); ctx.moveTo(px, pad.top); ctx.lineTo(px, H - pad.bottom); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(pad.left, py); ctx.lineTo(W - pad.right, py); ctx.stroke();
-                    ctx.setLineDash([]);
-                    ctx.fillStyle = 'rgba(232,146,77,0.15)';
-                    ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#e8924d';
-                    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#f5a862';
-                    ctx.font = "500 11px 'DM Mono', monospace";
-                    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-                    ctx.fillText(`k=${activK.toFixed(2)}`, px + 8, py - 6);
-                }
-
-                // Axis labels - X
-                ctx.fillStyle = 'rgba(138,125,107,0.7)';
-                ctx.font = "300 10px 'DM Mono', monospace";
-                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                sGridVals.forEach(sv => ctx.fillText(sv, xPos(sv), H - pad.bottom + 6));
-
-                // Axis labels - Y
-                ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-                kLabelVals.forEach(kv => {
-                    let lbl;
-                    if (kv >= 1) lbl = kv.toString();
-                    else if (kv === 0.15) lbl = '0.15';
-                    else lbl = kv.toFixed(kv < 0.1 ? 2 : 1);
-                    ctx.fillText(lbl, pad.left - 8, yPos(kv));
-                });
-
-                // Axis titles
-                ctx.fillStyle = 'rgba(138,125,107,0.5)';
-                ctx.font = "300 9px 'DM Mono', monospace";
-                ctx.textAlign = 'center';
-                ctx.fillText('enlarger scale', pad.left + cw / 2, H - 3);
-                ctx.save();
-                ctx.translate(10, pad.top + ch / 2);
-                ctx.rotate(-Math.PI / 2);
-                ctx.fillText('k coefficient', 0, 0);
-                ctx.restore();
-            }
-
-            window.nomogramToggleCalibration = function () {
-                const panel = $('nom-cal-panel');
-                const btn = $('nom-cal-toggle');
-                panel.classList.toggle('open');
-                btn.textContent = panel.classList.contains('open') ? 'Close' : 'Calibrate';
-            };
-
-            function nomogramSave() {
-                try {
-                    localStorage.setItem('darkroom_nomogram', JSON.stringify({
-                        lens: $('nom-lens').value,
-                        s1: $('nom-s1').value,
-                        s2: $('nom-s2').value,
-                        time: $('nom-time').value,
-                        aperture: $('nom-aperture').value,
-                        targetAperture: $('nom-target-aperture').value,
-                        rParam: $('nom-r-param').value,
-                        fstopMode: $('nom-fstop-mode').checked
-                    }));
-                } catch (e) { }
-            }
-
-            function nomogramLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_nomogram');
-                    if (!raw) return;
-                    const p = JSON.parse(raw);
-                    if (p.lens) $('nom-lens').value = p.lens;
-                    updateSliderRanges();
-                    if (p.s1) $('nom-s1').value = p.s1;
-                    if (p.s2) $('nom-s2').value = p.s2;
-                    if (p.time) $('nom-time').value = p.time;
-                    if (p.aperture) $('nom-aperture').value = p.aperture;
-                    if (p.targetAperture) $('nom-target-aperture').value = p.targetAperture;
-                    if (p.rParam) $('nom-r-param').value = p.rParam;
-                    if (p.fstopMode !== undefined) $('nom-fstop-mode').checked = p.fstopMode;
-                } catch (e) { }
-            }
-
-            $('nom-lens').addEventListener('change', function () {updateSliderRanges(); nomogramUpdate();});
-            ['nom-s1', 'nom-s2', 'nom-time', 'nom-aperture', 'nom-target-aperture', 'nom-r-param'].forEach(id => {
-                $(id).addEventListener('input', nomogramUpdate);
-            });
-            $('nom-fstop-mode').addEventListener('change', nomogramUpdate);
-            window.addEventListener('resize', function () {
-                if ($('view-nomogram').classList.contains('active')) nomogramUpdate();
-                if ($('view-placement').classList.contains('active')) placementDraw();
-            });
-
-            nomogramLoad();
-            // Only draw chart if view is visible (switchView will trigger draw otherwise)
-            if ($('view-nomogram').classList.contains('active')) nomogramUpdate();
-        })();
-
-        // ================================================================
-        // TOOL 6: DILUTION CALCULATOR
-        // ================================================================
-        (function () {
-            const CHEMICALS = {
-                rodinal:     { name: 'Rodinal',      density: 1.13, presets: ['1+25', '1+50', '1+100'] },
-                hc110:       { name: 'HC-110',       density: 1.10, presets: ['1+7', '1+15', '1+31', '1+63'] },
-                xtol:        { name: 'Xtol',         density: 1.02, presets: ['1+0', '1+1', '1+2', '1+3'] },
-                d76:         { name: 'D-76',         density: 1.02, presets: ['1+0', '1+1', '1+3'] },
-                microphen:   { name: 'Microphen',    density: 1.02, presets: ['1+0', '1+1', '1+3'] },
-                id11:        { name: 'ID-11',        density: 1.02, presets: ['1+0', '1+1', '1+3'] },
-                perceptol:   { name: 'Perceptol',    density: 1.02, presets: ['1+0', '1+1', '1+3'] },
-                ddx:         { name: 'DDX',          density: 1.03, presets: ['1+4', '1+9'] },
-                fomadon_lqn: { name: 'Fomadon LQN', density: 1.08, presets: ['1+10', '1+20'] },
-                fomacitro:   { name: 'Fomacitro',    density: 1.05, presets: ['1+9', '1+19'] },
-                fomafix:     { name: 'Fomafix',      density: 1.17, presets: ['1+5', '1+7', '1+10'] },
-                custom:      { name: 'Custom',       density: 1.00, presets: [] }
-            };
-
-            function renderPresets(presets) {
-                const container = $('dev-presets');
-                container.innerHTML = '';
-                presets.forEach(function (p) {
-                    const btn = document.createElement('button');
-                    btn.className = 'dev-preset-btn';
-                    btn.textContent = p;
-                    btn.onclick = function () { devApplyPreset(p); };
-                    container.appendChild(btn);
-                });
-            }
-
-            function devApplyPreset(str) {
-                const parts = str.split('+');
-                $('dev-partA').value = parseInt(parts[0]);
-                $('dev-partB').value = parseInt(parts[1]);
-                document.querySelectorAll('.dev-preset-btn').forEach(function (b) {
-                    b.classList.toggle('active', b.textContent === str);
-                });
-                devCalculate();
-            }
-
-            window.devOnChemicalChange = function () {
-                const key = $('dev-chemical').value;
-                const info = CHEMICALS[key];
-                $('dev-density').value = info.density;
-                renderPresets(info.presets);
-                if (info.presets.length > 0) {
-                    devApplyPreset(info.presets[0]);
-                }
-                devCalculate();
-            };
-
-            window.devCalculate = function () {
-                const a = parseFloat($('dev-partA').value) || 1;
-                const b = parseFloat($('dev-partB').value) || 0;
-                const totalVol = parseFloat($('dev-totalVol').value) || 0;
-                const density = parseFloat($('dev-density').value) || 1;
-
-                const totalParts = a + b;
-                const devVolume = (a / totalParts) * totalVol;
-                const waterVolume = (b / totalParts) * totalVol;
-
-                const devWeight = devVolume * density;
-                const waterWeight = waterVolume * 1.0;
-
-                $('dev-ratioDisplay').textContent = a + '+' + b;
-                $('dev-ratioDesc').textContent = b === 0
-                    ? 'stock / undiluted'
-                    : a + ' part' + (a > 1 ? 's' : '') + ' concentrate + ' + b + ' part' + (b > 1 ? 's' : '') + ' water';
-
-                $('dev-weight').textContent = devWeight.toFixed(1);
-                $('dev-vol').textContent = '= ' + devVolume.toFixed(1) + ' ml';
-                $('dev-waterWeight').textContent = waterWeight.toFixed(1);
-                $('dev-waterVol').textContent = '= ' + waterVolume.toFixed(1) + ' ml';
-
-                $('dev-totalWeight').textContent = (devWeight + waterWeight).toFixed(1) + ' g';
-
-                const currentRatio = a + '+' + b;
-                document.querySelectorAll('.dev-preset-btn').forEach(function (btn) {
-                    btn.classList.toggle('active', btn.textContent === currentRatio);
-                });
-
-                devSave();
-            };
-
-            function devSave() {
-                try {
-                    localStorage.setItem('darkroom_developer', JSON.stringify({
-                        chemical: $('dev-chemical').value,
-                        partA: $('dev-partA').value,
-                        partB: $('dev-partB').value,
-                        totalVol: $('dev-totalVol').value,
-                        density: $('dev-density').value
-                    }));
-                } catch (e) { }
-            }
-
-            function devLoad() {
-                try {
-                    const raw = localStorage.getItem('darkroom_developer');
-                    if (!raw) return false;
-                    const p = JSON.parse(raw);
-                    if (p.chemical) $('dev-chemical').value = p.chemical;
-                    if (p.partA) $('dev-partA').value = p.partA;
-                    if (p.partB) $('dev-partB').value = p.partB;
-                    if (p.totalVol) $('dev-totalVol').value = p.totalVol;
-                    if (p.density) $('dev-density').value = p.density;
-                    return true;
-                } catch (e) { return false; }
-            }
-
-            // Events
-            $('dev-chemical').addEventListener('change', devOnChemicalChange);
-            ['dev-partA', 'dev-partB', 'dev-totalVol', 'dev-density'].forEach(function (id) {
-                $(id).addEventListener('input', devCalculate);
-            });
-
-            // Init
-            if (devLoad()) {
-                renderPresets(CHEMICALS[$('dev-chemical').value].presets);
-                devCalculate();
-            } else {
-                devOnChemicalChange();
-            }
-        })();
-
-
-        // ================================================================
-        // TOOL 7: DEVELOPMENT TIME CALCULATOR
-        // ================================================================
-        (function () {
-            // Film/developer database: times in minutes at 20C
-            // Each developer entry has: dilution, times{N: min}, source per N value
-            // times keys: 0=box speed, 1=N+1, 2=N+2, -1=N-1, etc.
-            // Default factor (33%) used as fallback where no verified time exists.
-            // Factor 1.33x/stop from Rollei RPX 400 datasheet; confirmed by HP5 data.
-            var DEFAULT_FACTOR = 33;
-
-            var FILM_DEV_DB = {
-                trix: {
-                    name: 'Kodak Tri-X 400',
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                               '-1': 7, // MDC: EI 200, 20C
-                                0: 7,   // MDC: EI 400, 20C
-                                2: 13,  // MDC: EI 1600, 20C
-                                3: 17   // MDC: EI 3200, 20.5C
-                            }
-                            // N+1 (800): only 6.5 at 24C, no 20C data
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                               '-2': 7.5, // MDC: EI 100, 20C
-                               '-1': 9,   // MDC: EI 200, 20C
-                                0: 13,    // MDC: EI 400, 20C
-                                1: 16.5,  // MDC: EI 800, 20C
-                                2: 18.5,  // MDC: EI 1600, 20C
-                                3: 33     // MDC: EI 3200, 20C
-                            }
-                        },
-                        fomadon_lqn: {
-                            dilution: '1+10',
-                            times: {
-                                0: 15   // MDC (user-submitted)
-                            }
-                        }
-                    }
-                },
-                hp5: {
-                    name: 'Ilford HP5 Plus 400',
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                               '-2': 6,  // MDC: EI 100, 20C
-                               '-1': 5,  // MDC: EI 200, 20C
-                                0: 6,    // MDC: EI 400, 20C
-                                1: 8,    // MDC: EI 800, 20C
-                                2: 12,   // MDC: EI 1600, 20C
-                                3: 18    // MDC: EI 3200, 21C
-                            }
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                               '-2': 9,  // MDC: EI 100, 20C
-                                0: 11,   // MDC: EI 400, 20C
-                                1: 16,   // MDC: EI 800, 20C
-                                2: 24    // MDC: EI 1600, 20C
-                            }
-                            // N-1 (200): MDC says 10-13 (range), not precise
-                        },
-                        fomadon_lqn: {
-                            dilution: '1+10',
-                            times: {
-                                0: 9.5   // Foma foreign films doc (FOMA 09/16)
-                            }
-                        }
-                    }
-                },
-                fp4: {
-                    name: 'Ilford FP4 Plus 125',
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                                0: 9,    // MDC: EI 125, 20C
-                                1: 13,   // MDC: EI 200, 20C
-                                3: 35    // MDC: EI 800, 20C
-                            }
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                               '-1': 12, // MDC: EI 100, 20C (closest to N-1/64)
-                                0: 15,   // MDC: EI 125, 20C
-                                1: 20,   // MDC: EI 200, 20C
-                                2: 26    // MDC: EI 250, 20C
-                            }
-                        },
-                        fomadon_lqn: {
-                            dilution: '1+10',
-                            times: {
-                                0: 9     // Foma foreign films doc (FOMA 09/16)
-                            }
-                        },
-                        fomadon_lqn14: {
-                            dilution: '1+14',
-                            times: {
-                                0: 11    // Third-party LQN datasheet
-                            }
-                        }
-                    }
-                },
-                doublex: {
-                    name: 'Kodak Double-X 5222',
-                    // Box speed 250. MDC data at 20C.
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                                0: 5.75, // MDC: EI 250, 20C
-                                1: 7.5,  // MDC: EI 500, 20C
-                                2: 9.25  // MDC: EI 1000, 20C
-                            }
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                                0: 9,    // MDC: EI 250, 20C
-                                1: 11,   // MDC: EI 400, 20C (approx N+1)
-                                2: 16    // MDC: EI 800, 20C
-                            }
-                        },
-                        fomadon_lqn7: {
-                            dilution: '1+7',
-                            times: {
-                                1: 17    // MDC: EI 400, 20C (push from 250)
-                            }
-                        }
-                    }
-                },
-                retro400s: {
-                    name: 'Rollei Retro 400S',
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                                0: 10.5, // MDC: EI 400, 20C
-                                2: 20    // MDC (R09): EI 1600, 20C
-                            }
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                                0: 22    // MDC: EI 400, 20C
-                            }
-                        }
-                    }
-                },
-                kentmere200: {
-                    name: 'Kentmere 200',
-                    developers: {
-                        rodinal: {
-                            dilution: '1+25',
-                            times: {
-                                0: 10    // MDC (user-submitted, 35mm)
-                            }
-                        },
-                        rodinal50: {
-                            dilution: '1+50',
-                            times: {
-                                0: 11    // MDC + Flickr Kentmere group
-                            }
-                        }
-                    }
-                },
-                custom: {
-                    name: 'Custom',
-                    developers: {}
-                }
-            };
-
-            var DEV_NAMES = {
-                rodinal:       'Rodinal 1+25',
-                rodinal50:     'Rodinal 1+50',
-                fomadon_lqn:   'Fomadon LQN 1+10',
-                fomadon_lqn7:  'Fomadon LQN 1+7',
-                fomadon_lqn14: 'Fomadon LQN 1+14',
-                custom:        'Custom'
-            };
-
-            var currentPushPull = 0;
-
-            function formatTime(minutes) {
-                if (minutes <= 0) return '0:00';
-                var m = Math.floor(minutes);
-                var s = Math.round((minutes - m) * 60);
-                if (s === 60) return (m + 1) + ':00';
-                return m + ':' + (s < 10 ? '0' : '') + s;
-            }
-
-            function getDevEntry() {
-                var filmKey = $('dt-film').value;
-                var devKey = $('dt-developer').value;
-                if (filmKey === 'custom' || devKey === 'custom') return null;
-                var film = FILM_DEV_DB[filmKey];
-                if (!film) return null;
-                return film.developers[devKey] || null;
-            }
-
-            function populateDevelopers() {
-                var filmKey = $('dt-film').value;
-                var sel = $('dt-developer');
-                var prevDev = sel.value;
-                sel.innerHTML = '';
-
-                if (filmKey === 'custom') {
-                    var o = document.createElement('option');
-                    o.value = 'custom'; o.textContent = 'Custom';
-                    sel.appendChild(o);
-                    return;
-                }
-
-                var film = FILM_DEV_DB[filmKey];
-                var devKeys = Object.keys(film.developers);
-                devKeys.forEach(function (key) {
-                    var o = document.createElement('option');
-                    o.value = key;
-                    o.textContent = DEV_NAMES[key] || key;
-                    sel.appendChild(o);
-                });
-
-                if (devKeys.indexOf(prevDev) >= 0) {
-                    sel.value = prevDev;
-                }
-            }
-
-            function applyFilmDevSelection() {
-                var entry = getDevEntry();
-                if (entry && entry.times[0] !== undefined) {
-                    $('dt-baseTime').value = entry.times[0];
-                }
-            }
-
-            window.devtimeReset = function () {
-                currentPushPull = 0;
-                $('dt-refTemp').value = 20;
-                $('dt-actualTemp').value = 20;
-                $('dt-factor').value = DEFAULT_FACTOR;
-                applyFilmDevSelection();
-                renderPushPullButtons();
-                devtimeCalculate();
-            };
-
-            function renderPushPullButtons() {
-                var container = $('dt-pushpull-presets');
-                container.innerHTML = '';
-                var values = [-3, -2, -1, 0, 1, 2, 3];
-                var labels = ['N-3', 'N-2', 'N-1', 'N', 'N+1', 'N+2', 'N+3'];
-                values.forEach(function (v, i) {
-                    var btn = document.createElement('button');
-                    btn.className = 'dev-preset-btn' + (v === currentPushPull ? ' active' : '');
-                    btn.textContent = labels[i];
-                    btn.onclick = function () {
-                        currentPushPull = v;
-                        document.querySelectorAll('#dt-pushpull-presets .dev-preset-btn').forEach(function (b) {
-                            b.classList.remove('active');
-                        });
-                        btn.classList.add('active');
-                        devtimeCalculate();
-                    };
-                    container.appendChild(btn);
-                });
-            }
-
-            window.devtimeCalculate = function () {
-                var baseTime = parseFloat($('dt-baseTime').value) || 0;
-                var refTemp = parseFloat($('dt-refTemp').value) || 20;
-                var factor = parseFloat($('dt-factor').value) || DEFAULT_FACTOR;
-                var actualTemp = parseFloat($('dt-actualTemp').value) || 20;
-                var N = currentPushPull;
-
-                // Look up verified push/pull time
-                var entry = getDevEntry();
-                var verifiedTime = null;
-                var isVerified = false;
-                if (entry && entry.times[N] !== undefined) {
-                    verifiedTime = entry.times[N];
-                    isVerified = true;
-                }
-
-                // Push/pull time: use verified if available, else exponential model
-                var timePushPull;
-                var pushPullMultiplier;
-                if (isVerified) {
-                    timePushPull = verifiedTime;
-                    pushPullMultiplier = baseTime > 0 ? verifiedTime / baseTime : 1;
-                } else {
-                    pushPullMultiplier = Math.pow(1 + factor / 100, N);
-                    timePushPull = baseTime * pushPullMultiplier;
-                }
-
-                // Temperature: Q10 = 2 model
-                var tempDelta = refTemp - actualTemp;
-                var tempMultiplier = Math.pow(2, tempDelta / 10);
-                var timeFinal = timePushPull * tempMultiplier;
-
-                $('dt-res-base').textContent = formatTime(baseTime);
-                $('dt-res-pushpull').textContent = formatTime(timePushPull);
-                $('dt-res-final').textContent = formatTime(timeFinal);
-
-                // Build note
-                var parts = [];
-                if (N !== 0) {
-                    var pct = (pushPullMultiplier - 1) * 100;
-                    var sign = pct >= 0 ? '+' : '';
-                    var label = (N > 0 ? 'Push ' : 'Pull ') + Math.abs(N) + ' stop' + (Math.abs(N) > 1 ? 's' : '');
-                    if (isVerified) {
-                        parts.push(label + ': ' + formatTime(timePushPull) + ' (verified)');
-                    } else {
-                        parts.push(label + ': ' + sign + pct.toFixed(0) + '% (estimated, ' + pushPullMultiplier.toFixed(2) + 'x)');
-                    }
-                }
-                if (Math.abs(tempDelta) > 0.01) {
-                    var tSign = actualTemp > refTemp ? '+' : '';
-                    var tPct = (tempMultiplier - 1) * 100;
-                    var tPctSign = tPct >= 0 ? '+' : '';
-                    parts.push('Temperature ' + tSign + (actualTemp - refTemp).toFixed(1) + ' C: ' + tPctSign + tPct.toFixed(0) + '% (' + tempMultiplier.toFixed(3) + 'x)');
-                }
-                if (parts.length === 0) {
-                    $('dt-res-note').textContent = 'At reference temperature. No adjustment needed.';
-                } else {
-                    $('dt-res-note').innerHTML = parts.join('<br>');
-                }
-
-                devtimeSave();
-            };
-
-            function devtimeSave() {
-                try {
-                    localStorage.setItem('darkroom_devtime', JSON.stringify({
-                        film: $('dt-film').value,
-                        developer: $('dt-developer').value,
-                        baseTime: $('dt-baseTime').value,
-                        refTemp: $('dt-refTemp').value,
-                        pushPull: currentPushPull,
-                        factor: $('dt-factor').value,
-                        actualTemp: $('dt-actualTemp').value
-                    }));
-                } catch (e) { }
-            }
-
-            function devtimeLoad() {
-                try {
-                    var raw = localStorage.getItem('darkroom_devtime');
-                    if (!raw) return false;
-                    var p = JSON.parse(raw);
-                    if (p.film) $('dt-film').value = p.film;
-                    populateDevelopers();
-                    if (p.developer) $('dt-developer').value = p.developer;
-                    if (p.baseTime) $('dt-baseTime').value = p.baseTime;
-                    if (p.refTemp) $('dt-refTemp').value = p.refTemp;
-                    if (p.pushPull !== undefined) currentPushPull = p.pushPull;
-                    if (p.factor) $('dt-factor').value = p.factor;
-                    if (p.actualTemp) $('dt-actualTemp').value = p.actualTemp;
-                    return true;
-                } catch (e) { return false; }
-            }
-
-            // Events
-            $('dt-film').addEventListener('change', function () {
-                populateDevelopers();
-                applyFilmDevSelection();
-                devtimeCalculate();
-            });
-            $('dt-developer').addEventListener('change', function () {
-                applyFilmDevSelection();
-                devtimeCalculate();
-            });
-            ['dt-baseTime', 'dt-refTemp', 'dt-factor', 'dt-actualTemp'].forEach(function (id) {
-                $(id).addEventListener('input', devtimeCalculate);
-            });
-
-            // Init
-            if (!devtimeLoad()) {
-                populateDevelopers();
-                applyFilmDevSelection();
-            }
-            renderPushPullButtons();
-            devtimeCalculate();
-        })();
-
-
-        // Restore last active view (must run after all tools are initialized)
-        (function () {
-            const hash = window.location.hash.replace('#', '');
-            const saved = hash || localStorage.getItem('darkroom_active_view');
-            if (saved && $('view-' + saved)) {
-                switchView(saved);
-            }
-        })();
-
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(() => { });
-        }
-    </script>
+    <footer><p id="offline-status" role="status">Offline access becomes available after the first successful online load.</p></footer>
+    <script src="js/data.js"></script>
+    <script src="js/math.js"></script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>

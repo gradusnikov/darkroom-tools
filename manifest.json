@@ -1,7 +1,7 @@
 {
   "name": "Darkroom Tools",
   "short_name": "Darkroom",
-  "description": "Analog photography darkroom calculators — exposure, f-stop timing, enlarger correction, optical placement, and Opemus 5 nomogram",
+  "description": "Seven analog photography calculators: filter exposure, f-stop timing, enlargement, print placement, Opemus nomograms, dilution and development time",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1410",
