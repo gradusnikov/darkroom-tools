@@ -130,124 +130,53 @@
   "filterFactorStatus": "Legacy estimates; original measurement source and paper calibration unknown. Make a test strip at the final grade.",
   "chemicals": {
     "rodinal": {
-      "name": "Rodinal",
-      "density": null,
+      "name": "ADOX Rodinal",
+      "density": 1.386,
       "presets": [
         "1+25",
         "1+50",
         "1+100"
       ],
-      "densityNote": "No confirmed density for this formulation. Enter a measured density to calculate concentrate weight.",
-      "source": null
-    },
-    "hc110": {
-      "name": "HC-110",
-      "density": null,
-      "presets": [
-        "1+7",
-        "1+15",
-        "1+31",
-        "1+63"
-      ],
-      "densityNote": "No confirmed density for this formulation. Enter a measured density to calculate concentrate weight.",
-      "source": null
-    },
-    "xtol": {
-      "name": "Xtol",
-      "density": null,
-      "presets": [
-        "1+0",
-        "1+1",
-        "1+2",
-        "1+3"
-      ],
-      "densityNote": "Use prepared stock solution, not powder. Enter the measured stock density for weights.",
-      "source": null
-    },
-    "d76": {
-      "name": "D-76",
-      "density": null,
-      "presets": [
-        "1+0",
-        "1+1",
-        "1+3"
-      ],
-      "densityNote": "Use prepared stock solution, not powder. Enter the measured stock density for weights.",
-      "source": null
-    },
-    "microphen": {
-      "name": "Microphen",
-      "density": null,
-      "presets": [
-        "1+0",
-        "1+1",
-        "1+3"
-      ],
-      "densityNote": "Use prepared stock solution, not powder. Enter the measured stock density for weights.",
-      "source": null
-    },
-    "id11": {
-      "name": "ID-11",
-      "density": null,
-      "presets": [
-        "1+0",
-        "1+1",
-        "1+3"
-      ],
-      "densityNote": "Use prepared stock solution, not powder. Enter the measured stock density for weights.",
-      "source": null
-    },
-    "perceptol": {
-      "name": "Perceptol",
-      "density": null,
-      "presets": [
-        "1+0",
-        "1+1",
-        "1+3"
-      ],
-      "densityNote": "Use prepared stock solution, not powder. Enter the measured stock density for weights.",
-      "source": null
-    },
-    "ddx": {
-      "name": "DDX",
-      "density": 1.3,
-      "presets": [
-        "1+4",
-        "1+9"
-      ],
-      "densityNote": "Ilfotec DD-X: 2022 specification, relative density 1.30 at 20°C. Confirm your formulation or enter a measured density.",
-      "source": "https://www.ilfordphoto.com/wp/wp-content/uploads/2022/10/Ilfotec-DD-X-Film-Dev-J22.pdf"
+      "densityNote": "ADOX Rodinal: June 2014 SDS, 1.386 g/ml at 20°C. Historical reference; confirm your formulation or enter a measured density. R09 variants may differ.",
+      "source": "https://parallaxphotographic.coop/wp-content/uploads/2018/12/RODINAL-Adonal.pdf"
     },
     "fomadon_lqn": {
       "name": "Fomadon LQN",
-      "density": null,
+      "density": 1.15,
       "presets": [
         "1+10",
         "1+20"
       ],
-      "densityNote": "No confirmed density for this formulation. Enter a measured density to calculate concentrate weight.",
-      "source": null
+      "densityNote": "Fomadon LQN: February 2016 SDS, 1.15 g/ml at 20°C. Confirm your formulation or enter a measured density.",
+      "source": "https://fomaobchod.cz/inshop/files/70002/Fomadon%20LQN-7.0.pdf"
     },
     "fomacitro": {
       "name": "Fomacitro",
-      "density": null,
+      "density": 1.2,
       "presets": [
         "1+9",
         "1+19"
       ],
-      "densityNote": "No confirmed density for this formulation. Enter a measured density to calculate concentrate weight.",
-      "source": null
+      "densityNote": "Fomacitro: January 2015 SDS range 1.19–1.21 g/ml; default uses the midpoint, 1.20 g/ml.",
+      "source": "https://fotofilmfabriek.nl/wp-content/uploads/2020/07/Fomacitro-MSDS_EN.pdf"
+    },
+    "vinegar10": {
+      "name": "Vinegar (10% acidity)",
+      "density": 1.01,
+      "presets": ["1+4", "1+9"],
+      "densityNote": "10% vinegar: estimated density 1.01 g/ml at 20°C, based on a 10% aqueous acetic-acid reference (2009). 1+4 gives approximately 2% acidity; 1+9 gives approximately 1%. Use plain vinegar; enter a measured density if available.",
+      "source": "https://resources.finalsite.net/images/v1722357205/mccsdnet/vu7mkmpovhsuon2yka4l/msdssheets_acetic_acid_10pct_3_10.pdf"
     },
     "fomafix": {
       "name": "Fomafix",
-      "density": null,
+      "density": 1.3,
       "presets": [
         "1+5",
         "1+7",
         "1+10"
       ],
-      "densityNote": "No confirmed density for this formulation. Enter a measured density to calculate concentrate weight.",
-      "source": null
+      "densityNote": "Fomafix liquid concentrate: November 2013 SDS range 1.29–1.31 g/ml; default uses the midpoint, 1.30 g/ml. Confirm your formulation.",
+      "source": "https://www.freestylephoto.com/static/pdf/msds/foma/Fomafix.pdf"
     },
     "custom": {
       "name": "Custom",

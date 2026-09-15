@@ -9,7 +9,7 @@ A static progressive web app with seven calculators for analog photography. No b
 3. **Enlarger Exposure** — Magnification correction using the actual negative image width, including crops. Switching inches/centimetres converts existing dimensions. Keep the aperture and filtration unchanged.
 4. **Print Placement** — Optical or geometric placement with optional image preview. Measurements retain precision through unit changes and saved settings. Offsets that move the print outside the mount are rejected.
 5. **Opemus 5 Nomogram** — Approximate interpolation of the original manual charts for 50–55 mm and 75–80 mm lenses, with easel-height and aperture correction. Reference samples are visible in the app; no extrapolation beyond the supported scale range.
-6. **Dilution Calculator** — Volume-based `concentrate + water` ratios, plus weights when concentrate density is known. Unknown densities stay blank. DD-X includes a specifically identified 2022 density reference; other formulations need a measured density. Powder developers refer to prepared stock solutions.
+6. **Dilution Calculator** — Volume ratios and mixing weights for Rodinal, Fomadon LQN, Fomacitro, 10% vinegar, Fomafix and Custom. Editable reference densities include source notes; your density is remembered separately for each chemical. Vinegar presets give approximately 2% (1+4) or 1% (1+9) acidity.
 7. **Development Time** — Recipes retain their actual exposure index, temperature, source status, format and agitation where known. Editing a base time or temperature switches to Custom. Temperature compensation uses the Ilford chart by default, with an explicitly selected generic Q10 estimate as an alternative.
 
 See [calculation assumptions, sources and calibration limits](docs/CALIBRATION.md).

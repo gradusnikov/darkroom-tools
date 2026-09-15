@@ -56,13 +56,24 @@ Per the manual, subtract easel thickness in centimetres from both scale readings
 
 For the volume ratio `a+b`, concentrate volume is `total × a/(a+b)` and water is the remainder. `1+50` means 51 total parts. A stock solution is `1+0`.
 
-Concentrate mass is `volume × density`. The previously guessed factory densities were removed:
+Concentrate mass is `volume × density`. The dilution list contains Rodinal, Fomadon LQN, Fomacitro, 10% vinegar, Fomafix and Custom.
 
-- [Ilfotec DD-X, September 2022 specification, section 9](https://www.ilfordphoto.com/wp/wp-content/uploads/2022/10/Ilfotec-DD-X-Film-Dev-J22.pdf): relative density 1.30 at 20°C, used as an approximate 1.30 g/ml reference. The UI identifies this version explicitly; confirm the actual formulation before mixing by weight. The later [2024 sheet](https://www.ilfordphoto.com/wp/wp-content/uploads/2024/12/GB-Ilfotec-DD-X-Film-Developer.pdf) does not state density.
-- Rodinal/Adonal/R09, HC-110, prepared Xtol/D-76/Microphen/ID-11/Perceptol stock, Fomadon LQN, Fomacitro and Fomafix: no confirmed density is shipped. Enter a measured value to enable concentrate and total weights. Rodinal-family and HC-110 formulations must not be assumed interchangeable by mass.
-- Water mass uses approximately 0.9982 g/ml at 20°C. Volume additivity is an approximation; for an exact final volume, measure the concentrate and top up to a volumetric mark.
+| Chemical | Default density (g/ml) | Reference and scope |
+| --- | --- | --- |
+| ADOX Rodinal | 1.386 | [ADOX June 2014 SDS, section 9](https://parallaxphotographic.coop/wp-content/uploads/2018/12/RODINAL-Adonal.pdf), at 20°C. Historical formulation reference; not a universal R09-family density. The [June 2024 SDS](https://www.fotoimpex.com/shop/images/products/media/56415_4_MSDS_EN.pdf) does not supply a density. |
+| Fomadon LQN | 1.15 | [FOMA February 2016 SDS v7.0, section 9](https://fomaobchod.cz/inshop/files/70002/Fomadon%20LQN-7.0.pdf), at 20°C. |
+| Fomacitro | 1.20 | Midpoint of 1.19–1.21 g/ml in [FOMA January 2015 SDS v5.1, section 9](https://fotofilmfabriek.nl/wp-content/uploads/2020/07/Fomacitro-MSDS_EN.pdf). |
+| Vinegar, 10% acidity | 1.01 | Estimate using the 10% aqueous acetic-acid density at 20°C in [Scholar Chemistry / Columbus Chemical Industries January 2009 MSDS, section 9](https://resources.finalsite.net/images/v1722357205/mccsdnet/vu7mkmpovhsuon2yka4l/msdssheets_acetic_acid_10pct_3_10.pdf). This is a proxy for plain vinegar, not a measurement of a particular food product. |
+| Fomafix liquid concentrate | 1.30 | Midpoint of 1.29–1.31 g/ml in [FOMA November 2013 SDS v5, section 9](https://www.freestylephoto.com/static/pdf/msds/foma/Fomafix.pdf). Check the formulation; this does not describe Fomafix P powder. |
+| Custom | None | Enter a measured density to enable weights. |
 
-On migration, recognizable old factory densities are replaced; custom densities and values differing from the old factory defaults are retained. New saves explicitly distinguish an empty density from a measured value.
+All defaults are editable. Reference dates and assumptions appear in the calculator. Vinegar presets use 10% starting acidity: 1+4 gives approximately 2%, and 1+9 approximately 1%, assuming additive volumes and comparable concentration conventions. The initial 2% target is consistent with [Foma's Fomapan 100 processing sheet](https://www.foma.cz/en/fomapan-100); use the concentration appropriate to your process.
+
+Water mass uses approximately 0.9982 g/ml at 20°C. Volume additivity is an approximation; for an exact final volume, measure the concentrate and top up to a volumetric mark.
+
+Density overrides are saved separately for every chemical in browser storage, including an explicitly cleared field. Switching chemicals and reloading preserves them. “Use default density” removes only the selected chemical's override. Invalid density edits do not replace its last valid setting. A valid density edit is retained even while another calculator field is invalid.
+
+Old saved nonempty user densities migrate into the per-chemical overrides. Recognizable original factory guesses are replaced with sourced defaults; formerly blank fields adopt the new defaults. Removed developer selections reset to Rodinal without transferring their density or dilution. Storage version 3 distinguishes new intentional blanks from missing overrides.
 
 ## Development recipes
 

@@ -944,6 +944,18 @@ window.addEventListener('hashchange', function () {
 // ================================================================
 (function () {
     const CHEMICALS = DarkroomData.chemicals;
+    const densityOverrides = Object.create(null);
+
+    function validDensity(value) {
+        return (typeof value === 'string' || typeof value === 'number')
+            && (value === '' || (Number.isFinite(Number(value)) && Number(value) > 0));
+    }
+
+    function loadDensity() {
+        const key = $('dev-chemical').value;
+        $('dev-density').value = densityOverrides[key] ?? CHEMICALS[key].density ?? '';
+        showDensityReference();
+    }
 
     function renderPresets(presets) {
         const container = $('dev-presets');
@@ -970,8 +982,7 @@ window.addEventListener('hashchange', function () {
     window.devOnChemicalChange = function () {
         const key = $('dev-chemical').value;
         const info = CHEMICALS[key];
-        $('dev-density').value = info.density ?? '';
-        showDensityReference();
+        loadDensity();
         renderPresets(info.presets);
         if (info.presets.length > 0) {
             devApplyPreset(info.presets[0]);
@@ -980,7 +991,12 @@ window.addEventListener('hashchange', function () {
     };
 
     function showDensityReference() {
-        const info = CHEMICALS[$('dev-chemical').value];
+        const key = $('dev-chemical').value, info = CHEMICALS[key];
+        const overridden = Object.hasOwn(densityOverrides, key);
+        $('dev-density-status').textContent = overridden
+            ? (densityOverrides[key] === '' ? 'Density left blank for this chemical.' : 'Using your density for this chemical.')
+            : (info.density === null ? 'No default density available.' : 'Using the reference density.');
+        $('dev-density-reset').disabled = !overridden;
         $('dev-density-note').textContent = info.densityNote;
         $('dev-density-source').hidden = !info.source;
         if (info.source) $('dev-density-source').href = info.source;
@@ -1004,12 +1020,13 @@ window.addEventListener('hashchange', function () {
     function devSave() {
         try {
             localStorage.setItem('darkroom_developer', JSON.stringify({
-                schemaVersion: 2,
+                schemaVersion: 3,
                 chemical: $('dev-chemical').value,
                 partA: $('dev-partA').value,
                 partB: $('dev-partB').value,
                 totalVol: $('dev-totalVol').value,
-                density: $('dev-density').value
+                density: $('dev-density').value,
+                densityOverrides
             }));
         } catch (e) { }
     }
@@ -1019,24 +1036,47 @@ window.addEventListener('hashchange', function () {
             const raw = localStorage.getItem('darkroom_developer');
             if (!raw) return false;
             const p = JSON.parse(raw);
+            // A removed developer must not transfer its density to Rodinal.
+            if (!Object.hasOwn(CHEMICALS, p.chemical)) return false;
             restoreChoice('dev-chemical', p.chemical);
             if (p.partA) $('dev-partA').value = p.partA;
             if (p.partB) $('dev-partB').value = p.partB;
             if (p.totalVol) $('dev-totalVol').value = p.totalVol;
-            const oldDefaults = {rodinal: 1.13, hc110: 1.10, xtol: 1.02, d76: 1.02, microphen: 1.02, id11: 1.02,
-                perceptol: 1.02, ddx: 1.03, fomadon_lqn: 1.08, fomacitro: 1.05, fomafix: 1.17, custom: 1};
+            const oldDefaults = {rodinal: 1.13, fomadon_lqn: 1.08, fomacitro: 1.05, fomafix: 1.17, custom: 1};
             const key = $('dev-chemical').value;
             const wasOverride = p.density !== undefined && (key === 'custom' || Number(p.density) !== oldDefaults[key]);
-            $('dev-density').value = p.schemaVersion === 2 || wasOverride ? p.density ?? '' : CHEMICALS[key].density ?? '';
-            showDensityReference();
+            if (p.schemaVersion === 3) {
+                for (const chemical of Object.keys(CHEMICALS)) {
+                    const value = p.densityOverrides?.[chemical];
+                    if (validDensity(value)) densityOverrides[chemical] = String(value);
+                }
+            } else if (p.density !== '' && validDensity(p.density) && (p.schemaVersion === 2 || wasOverride)) {
+                densityOverrides[key] = String(p.density);
+            }
+            loadDensity();
             return true;
         } catch (e) { return false; }
     }
 
     // Events
     $('dev-chemical').addEventListener('change', devOnChemicalChange);
-    ['dev-partA', 'dev-partB', 'dev-totalVol', 'dev-density'].forEach(function (id) {
+    ['dev-partA', 'dev-partB', 'dev-totalVol'].forEach(function (id) {
         $(id).addEventListener('input', devCalculate);
+    });
+    $('dev-density').addEventListener('input', function () {
+        if (!this.validity.badInput && validDensity(this.value)) {
+            densityOverrides[$('dev-chemical').value] = this.value;
+            // Remember a valid density even while a different input is invalid.
+            devSave();
+            showDensityReference();
+        }
+        devCalculate();
+    });
+    $('dev-density-reset').addEventListener('click', function () {
+        delete densityOverrides[$('dev-chemical').value];
+        loadDensity();
+        devSave();
+        devCalculate();
     });
 
     // Init

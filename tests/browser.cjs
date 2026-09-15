@@ -135,15 +135,59 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await text('nom-corrected-time'), '40.0');
     console.log('PASS: full-range nomogram, easel bounds and aperture ratio');
 
-    await view('developer'); await select('dev-chemical', 'ddx'); await fill('dev-totalVol', 500);
-    assert.equal(await text('dev-weight'), '130.0');
+    await view('developer'); await select('dev-chemical', 'rodinal'); await fill('dev-totalVol', 260);
+    assert.equal(await value('dev-density'), '1.386');
+    assert.equal(await text('dev-weight'), '13.9');
+    assert.equal(await page.locator('#dev-chemical option[value="ddx"]').count(), 0);
+    await fill('dev-density', 1.4);
+    await select('dev-chemical', 'fomadon_lqn');
+    assert.equal(await value('dev-density'), '1.15');
+    await fill('dev-density', 1.16);
     await select('dev-chemical', 'rodinal');
-    assert.equal(await value('dev-density'), ''); assert.equal(await text('dev-weight'), '—');
+    assert.equal(await value('dev-density'), '1.4');
+    await page.reload();
+    assert.equal(await value('dev-density'), '1.4');
+    await select('dev-chemical', 'fomadon_lqn');
+    assert.equal(await value('dev-density'), '1.16');
+    await fill('dev-density', '');
+    assert.equal(await text('dev-weight'), '—');
     assert.match(await text('dev-vol'), /ml/);
-    await fill('dev-density', 1.13); assert.notEqual(await text('dev-weight'), '—');
+    await select('dev-chemical', 'rodinal');
+    await page.reload();
+    await select('dev-chemical', 'fomadon_lqn');
+    assert.equal(await value('dev-density'), '');
+    await page.click('#dev-density-reset');
+    assert.equal(await value('dev-density'), '1.15');
     await fill('dev-partB', -1); assert.match(await text('dev-error'), /Water parts/);
-    assert.equal(await text('dev-weight'), '—'); await fill('dev-partB', 50);
-    console.log('PASS: sourced DD-X density, optional measured density and invalid dilution');
+    await fill('dev-density', 1.17); // Keep a density edit even while another input is invalid.
+    assert.equal(await text('dev-weight'), '—');
+    await select('dev-chemical', 'rodinal');
+    await select('dev-chemical', 'fomadon_lqn');
+    assert.equal(await value('dev-density'), '1.17');
+    await fill('dev-density', -1);
+    assert.match(await text('dev-error'), /Density/);
+    await select('dev-chemical', 'rodinal');
+    await select('dev-chemical', 'fomadon_lqn');
+    assert.equal(await value('dev-density'), '1.17'); // Invalid edits cannot replace the last valid value.
+    await page.click('#dev-density-reset');
+    await page.reload();
+    assert.equal(await value('dev-density'), '1.15');
+    for (const [chemical, density] of [['fomacitro', '1.2'], ['fomafix', '1.3']]) {
+      await select('dev-chemical', chemical);
+      assert.equal(await value('dev-density'), density);
+    }
+    await select('dev-chemical', 'vinegar10'); await fill('dev-totalVol', 500);
+    assert.equal(await value('dev-density'), '1.01');
+    assert.equal(await text('dev-ratioDisplay'), '1+4');
+    assert.equal(await text('dev-vol'), '100.0 ml');
+    assert.equal(await text('dev-weight'), '101.0');
+    await fill('dev-density', 1.012);
+    await select('dev-chemical', 'fomacitro');
+    await page.reload();
+    await select('dev-chemical', 'vinegar10');
+    assert.equal(await value('dev-density'), '1.012');
+    assert.equal(await page.locator('#dev-chemical option').count(), 6);
+    console.log('PASS: density defaults, per-chemical persistence, blank/reset handling and invalid edits');
 
     await view('devtime'); await select('dt-film', 'trix'); await select('dt-developer', 'rodinal');
     await select('dt-recipe', '400'); assert.equal(await text('dt-res-final'), '7:00');
@@ -200,13 +244,35 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await legacy.locator('#exp-updatedFilterGrade').inputValue(), 'custom');
     assert.equal(await legacy.locator('#exp-existingC').inputValue(), '0');
     assert.equal(await legacy.locator('#exp-updatedC').inputValue(), '0');
-    assert.equal(await legacy.locator('#dev-density').inputValue(), '1.3');
+    assert.equal(await legacy.locator('#dev-chemical').inputValue(), 'rodinal');
+    assert.equal(await legacy.locator('#dev-density').inputValue(), '1.386');
     assert.equal(await legacy.locator('#dt-refTemp').inputValue(), '20');
     assert.equal(await legacy.locator('#dt-recipe').inputValue(), '125');
     await legacy.click('.tab-btn[data-view="nomogram"]');
     assert.equal(await legacy.locator('#nom-k-value').textContent(), '35.000');
     await legacyContext.close();
     console.log('PASS: migration discards misleading legacy grades, densities, stop keys and r calibration');
+
+    for (const [saved, expected] of [
+      [{chemical:'rodinal', density:'1.13'}, '1.386'],
+      [{chemical:'rodinal', schemaVersion:2, density:'1.41'}, '1.41'],
+      [{chemical:'fomadon_lqn', schemaVersion:2, density:''}, '1.15'],
+      [{chemical:'fomadon_lqn', schemaVersion:3, densityOverrides:{fomadon_lqn:-1}}, '1.15']
+    ]) {
+      const migrationContext = await browser.newContext();
+      const migrationPage = await migrationContext.newPage();
+      await migrationPage.goto(base);
+      await migrationPage.evaluate(saved => localStorage.setItem('darkroom_developer', JSON.stringify(saved)), saved);
+      await migrationPage.reload();
+      assert.equal(await migrationPage.locator('#dev-density').inputValue(), expected);
+      await migrationPage.click('.tab-btn[data-view="developer"]');
+      await migrationPage.selectOption('#dev-chemical', 'custom');
+      await migrationPage.reload();
+      await migrationPage.selectOption('#dev-chemical', saved.chemical);
+      assert.equal(await migrationPage.locator('#dev-density').inputValue(), expected);
+      await migrationContext.close();
+    }
+    console.log('PASS: old density overrides migrate and missing/invalid densities use defaults');
 
     const restrictedContext = await browser.newContext();
     const restricted = await restrictedContext.newPage();
@@ -215,6 +281,11 @@ const server = http.createServer(async (req, res) => {
       Object.defineProperty(window, 'localStorage', {get() {throw new DOMException('Blocked', 'SecurityError');}});
     });
     await restricted.goto(base);
+    await restricted.click('.tab-btn[data-view="developer"]');
+    await restricted.fill('#dev-density', '1.42');
+    await restricted.selectOption('#dev-chemical', 'fomadon_lqn');
+    await restricted.selectOption('#dev-chemical', 'rodinal');
+    assert.equal(await restricted.locator('#dev-density').inputValue(), '1.42');
     await restricted.click('.tab-btn[data-view="devtime"]');
     assert.equal(await restricted.locator('#dt-res-final').textContent(), '7:00');
     await restrictedContext.close();

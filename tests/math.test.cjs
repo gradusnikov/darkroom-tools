@@ -76,10 +76,14 @@ test('placement symmetry, sub-mm precision, conservation and offset bounds', () 
   assert.throws(() => M.placement(400, 500, 200, 300, 'optical', 100));
   assert.throws(() => M.placement(400, 500, 200, 300, 'optical', -126));
 });
-test('dilution preserves volume, uses DD-X source density and allows unknown density', () => {
-  const r = M.dilution(1, 4, 500, D.chemicals.ddx.density);
-  near(r.concentrate, 100); near(r.water, 400); near(r.concentrateMass, 130);
-  near(r.totalMass, 529.28);
+test('dilution preserves volume, uses sourced concentrate densities and allows unknown density', () => {
+  const r = M.dilution(1, 25, 260, D.chemicals.rodinal.density);
+  near(r.concentrate, 10); near(r.water, 250); near(r.concentrateMass, 13.86);
+  near(r.totalMass, 263.41);
+  near(M.dilution(1, 10, 550, D.chemicals.fomadon_lqn.density).concentrateMass, 57.5);
+  near(M.dilution(1, 19, 500, D.chemicals.fomacitro.density).concentrateMass, 30);
+  near(M.dilution(1, 5, 600, D.chemicals.fomafix.density).concentrateMass, 130);
+  near(M.dilution(1, 4, 500, D.chemicals.vinegar10.density).concentrateMass, 101);
   assert.equal(M.dilution(1, 50, 500).concentrateMass, null);
   near(M.dilution(1, 0, 500).water, 0);
   assert.throws(() => M.dilution(1, -1, 500, 1));
