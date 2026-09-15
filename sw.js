@@ -1,6 +1,6 @@
 // Bump this version whenever the app shell changes.
 const CACHE_PREFIX = 'darkroom-tools-';
-const CACHE_NAME = CACHE_PREFIX + 'v2';
+const CACHE_NAME = CACHE_PREFIX + 'v3';
 const APP_SHELL = [
   './index.html', './js/data.js', './js/math.js', './js/app.js',
   './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'

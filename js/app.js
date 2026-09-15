@@ -72,7 +72,7 @@ window.addEventListener('hashchange', function () {
             sel.appendChild(o);
         });
         sel.value = [...sel.options].some(o => o.value === previous && !o.disabled) ? previous : 'custom';
-        for (const id of ['exp-existingY', 'exp-existingM', 'exp-updatedY', 'exp-updatedM']) $(id).max = max;
+        for (const id of ['exp-existingY', 'exp-existingM', 'exp-existingC', 'exp-updatedY', 'exp-updatedM', 'exp-updatedC']) $(id).max = max;
         $('exp-source').href = DarkroomData.sources[paperType === 'foma' ? 'fomaContrast' : 'ilfordContrast'];
     }
 
@@ -121,7 +121,7 @@ window.addEventListener('hashchange', function () {
         const eY = readNumber('exp-existingY'), eM = readNumber('exp-existingM');
         const nY = readNumber('exp-updatedY'), nM = readNumber('exp-updatedM');
         const time = readNumber('exp-existingTime');
-        const updated = M.exposure(time, headType, eY, eM, nY, nM);
+        const updated = M.exposure(time, headType, eY, eM, nY, nM, readNumber('exp-existingC'), readNumber('exp-updatedC'));
 
         const fStops = Math.log2(updated / time);
         const rounded = Math.round(fStops * 24) / 24;
@@ -158,9 +158,11 @@ window.addEventListener('hashchange', function () {
                 updatedFilterGrade: $('exp-updatedFilterGrade').value,
                 existingY: $('exp-existingY').value,
                 existingM: $('exp-existingM').value,
+                existingC: $('exp-existingC').value,
                 existingTime: $('exp-existingTime').value,
                 updatedY: $('exp-updatedY').value,
                 updatedM: $('exp-updatedM').value,
+                updatedC: $('exp-updatedC').value,
                 fstopMode: $('exp-fstop-mode').checked
             }));
         } catch (e) { }
@@ -187,9 +189,11 @@ window.addEventListener('hashchange', function () {
         if (saved.updatedFilterGrade) $('exp-updatedFilterGrade').value = saved.updatedFilterGrade;
         if (saved.existingY) $('exp-existingY').value = saved.existingY;
         if (saved.existingM) $('exp-existingM').value = saved.existingM;
+        $('exp-existingC').value = saved.existingC ?? 0;
         if (saved.existingTime) $('exp-existingTime').value = saved.existingTime;
         if (saved.updatedY) $('exp-updatedY').value = saved.updatedY;
         if (saved.updatedM) $('exp-updatedM').value = saved.updatedM;
+        $('exp-updatedC').value = saved.updatedC ?? 0;
         if (saved.fstopMode) $('exp-fstop-mode').checked = saved.fstopMode;
     } else {
         $('exp-existingFilterGrade').value = '2';
@@ -227,9 +231,9 @@ window.addEventListener('hashchange', function () {
         applyFilterToInputs('exp-updatedFilterGrade');
         exposureCalculate();
     });
-    ['exp-existingY', 'exp-existingM', 'exp-existingTime', 'exp-updatedY', 'exp-updatedM'].forEach(id => {
+    ['exp-existingY', 'exp-existingM', 'exp-existingC', 'exp-existingTime', 'exp-updatedY', 'exp-updatedM', 'exp-updatedC'].forEach(id => {
         $(id).addEventListener('input', function () {
-            if (id !== 'exp-existingTime') $(id.startsWith('exp-existing') ? 'exp-existingFilterGrade' : 'exp-updatedFilterGrade').value = 'custom';
+            if (id.endsWith('Y') || id.endsWith('M')) $(id.startsWith('exp-existing') ? 'exp-existingFilterGrade' : 'exp-updatedFilterGrade').value = 'custom';
             exposureCalculate();
         });
     });

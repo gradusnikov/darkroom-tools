@@ -1,4 +1,5 @@
 // Reference data and provenance. See docs/CALIBRATION.md.
+// filterFactors entries contain [yellow, magenta, cyan] exposure multipliers.
 (function (root) {
     "use strict";
     const data = {

@@ -33,6 +33,33 @@ test('filter identity, interpolation, reverse corrections and supported ranges',
   assert.equal(D.filterSettings.ilford['5'], undefined);
   assert.deepEqual(D.filterSettings.ilford['4.5'], {Y: 0, M: 200});
 });
+test('Ilford presets match the supplied single-filter Meopta column', () => {
+  const reference = [
+    ['00', 150, 0], ['0', 90, 0], ['0.5', 70, 0], ['1', 55, 0],
+    ['1.5', 30, 0], ['2', 0, 0], ['2.5', 0, 20], ['3', 0, 40],
+    ['3.5', 0, 65], ['4', 0, 85], ['4.5', 0, 200]
+  ];
+  assert.deepEqual(D.filterSettings.ilford,
+    Object.fromEntries(reference.map(([grade, Y, M]) => [grade, {Y, M}])));
+});
+test('cyan ND correction uses head factors, interpolates and combines with yellow/magenta', () => {
+  near(M.exposure(10, 'meochrom1', 0, 0, 0, 0, 0, 100), 15);
+  near(M.exposure(10, 'meochrom2', 0, 0, 0, 0, 0, 100), 16);
+  near(M.exposure(10, 'meochrom2', 0, 0, 0, 0, 0, 15), 11.3);
+  near(M.exposure(10, 'meochrom2', 0, 0, 0, 0, 100, 0), 6.25);
+  near(M.exposure(10, 'meochrom2', 0, 0, 10, 10, 0, 10), 10 * 1.05 * 1.15 * 1.09);
+  for (const head of Object.keys(D.filterFactors)) {
+    near(M.exposure(10, head, 50, 10, 0, 70, 100, 100), M.exposure(10, head, 50, 10, 0, 70));
+    const forward = M.exposure(10, head, 50, 10, 0, 70, 15, 150);
+    near(M.exposure(forward, head, 0, 70, 50, 10, 150, 15), 10);
+    const max = head === 'meochrom1' ? 150 : 180;
+    near(M.filterFactor(head, max, 2), head === 'meochrom1' ? 1.65 : 1.86);
+    for (const invalid of [-1, max + 1, NaN, Infinity]) {
+      assert.throws(() => M.exposure(10, head, 0, 0, 0, 0, invalid, 0), RangeError);
+      assert.throws(() => M.exposure(10, head, 0, 0, 0, 0, 0, invalid), RangeError);
+    }
+  }
+});
 test('magnification correction: independent worked example and invariant units', () => {
   // 36 mm negative: 180 mm print (5×) to 396 mm print (11×) doubles lens-image distance.
   near(M.enlargement(10, 180, 396, 36).time, 40);

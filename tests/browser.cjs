@@ -56,6 +56,38 @@ const server = http.createServer(async (req, res) => {
     await fill('exp-existingTime', 10);
     console.log('PASS: filter ranges and invalid-result clearing');
 
+    await select('exp-colorHeadType', 'meochrom2');
+    await select('exp-existingFilterGrade', '2');
+    await select('exp-updatedFilterGrade', '2');
+    await fill('exp-updatedC', 100);
+    assert.equal(await text('exp-updatedTime'), '16.00');
+    assert.equal(await value('exp-updatedFilterGrade'), '2');
+    await page.locator('.toggle-label').filter({has: page.locator('#exp-fstop-mode')}).click();
+    assert.equal(await text('exp-fstop-rounded-time'), '15.9');
+    await fill('exp-existingC', 100);
+    assert.equal(await text('exp-updatedTime'), '10.00');
+    assert.equal(await value('exp-existingFilterGrade'), '2');
+    await select('exp-updatedFilterGrade', '3');
+    assert.equal(await value('exp-updatedC'), '100');
+    await page.reload();
+    assert.equal(await value('exp-existingC'), '100');
+    assert.equal(await value('exp-updatedC'), '100');
+    assert.equal(await value('exp-updatedFilterGrade'), '3');
+    await select('exp-updatedFilterGrade', '2');
+    await fill('exp-existingC', 0);
+    await fill('exp-updatedC', 180);
+    assert.equal(await text('exp-updatedTime'), '18.60');
+    await select('exp-colorHeadType', 'meochrom1');
+    assert.equal(await page.locator('#exp-updatedC').getAttribute('max'), '150');
+    assert.match(await text('exp-error'), /between 0 and 150/);
+    assert.equal(await text('exp-updatedTime'), '—');
+    assert.equal(await page.locator('#exp-fstop-result').evaluate(el => el.classList.contains('visible')), false);
+    await fill('exp-updatedC', '');
+    assert.match(await text('exp-error'), /finite/);
+    await fill('exp-updatedC', 0);
+    await page.locator('.toggle-label').filter({has: page.locator('#exp-fstop-mode')}).click();
+    console.log('PASS: cyan correction, independent grades, persistence, f-stops and head limits');
+
     await view('fstop'); await fill('fstop-baseTime', 10); await select('fstop-dryDown', '0.1');
     assert.equal(await page.locator('.row-zero .time-link').textContent(), '9');
     await page.locator('.row-zero .time-link').click();
@@ -166,6 +198,8 @@ const server = http.createServer(async (req, res) => {
     });
     await legacy.goto(base);
     assert.equal(await legacy.locator('#exp-updatedFilterGrade').inputValue(), 'custom');
+    assert.equal(await legacy.locator('#exp-existingC').inputValue(), '0');
+    assert.equal(await legacy.locator('#exp-updatedC').inputValue(), '0');
     assert.equal(await legacy.locator('#dev-density').inputValue(), '1.3');
     assert.equal(await legacy.locator('#dt-refTemp').inputValue(), '20');
     assert.equal(await legacy.locator('#dt-recipe').inputValue(), '125');

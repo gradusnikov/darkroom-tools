@@ -30,15 +30,16 @@
     }
     function filterFactor(head, value, channel) {
         const table = data.filterFactors[head];
-        if (!table || ![0, 1].includes(channel)) throw new RangeError('Select a supported color head and filter.');
+        if (!table || ![0, 1, 2].includes(channel)) throw new RangeError('Select a supported color head and filter.');
         const points = Object.entries(table).map(([x, factors]) => [Number(x), factors[channel]]).sort((a, b) => a[0] - b[0]);
         range(value, points[0][0], points.at(-1)[0], 'Filter setting');
         return interpolate(points, value);
     }
-    function exposure(time, head, oldY, oldM, newY, newM) {
+    function exposure(time, head, oldY, oldM, newY, newM, oldC = 0, newC = 0) {
         positive(time, 'Exposure time');
         return positive(time * filterFactor(head, newY, 0) / filterFactor(head, oldY, 0)
-            * filterFactor(head, newM, 1) / filterFactor(head, oldM, 1), 'Corrected exposure');
+            * filterFactor(head, newM, 1) / filterFactor(head, oldM, 1)
+            * filterFactor(head, newC, 2) / filterFactor(head, oldC, 2), 'Corrected exposure');
     }
     function fstopTime(base, stops, dryDown = 0) {
         positive(base, 'Base time'); finite(stops, 'Stops'); range(dryDown, 0, 0.99, 'Dry-down fraction');

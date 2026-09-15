@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const source = fs.readFileSync(require.resolve('../sw.js'), 'utf8');
 function harness(failInstall = false) {
   const scope = 'https://example.test/darkroom-tools/';
-  const handlers = {}, contents = new Map(), deleted = [], keys = ['other-app-v1', 'darkroom-tools-v1', 'darkroom-tools-v2'];
+  const handlers = {}, contents = new Map(), deleted = [], keys = ['other-app-v1', 'darkroom-tools-v1', 'darkroom-tools-v2', 'darkroom-tools-v3'];
   let activated = false, claimed = false, fetched = 0;
   const cache = {
     async addAll(requests) {
@@ -45,7 +45,7 @@ test('failed installation cannot replace a working worker', async () => {
 });
 test('activation preserves caches owned by other applications', async () => {
   const h = harness(); await h.lifetime('activate');
-  assert.deepEqual(h.deleted, ['darkroom-tools-v1']); assert.equal(h.state().claimed, true);
+  assert.deepEqual(h.deleted, ['darkroom-tools-v1', 'darkroom-tools-v2']); assert.equal(h.state().claimed, true);
 });
 test('root and index navigation, including query strings, work offline', async () => {
   const h = harness(); await h.lifetime('install');

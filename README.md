@@ -4,7 +4,7 @@ A static progressive web app with seven calculators for analog photography. No b
 
 ## Tools
 
-1. **Exposure Time Calculator** — Estimated time correction for yellow/magenta filtration. Published Foma and Ilford grade settings are restricted to the available Meochrom head data; unsupported settings produce an error. The historical exposure-factor tables remain explicitly marked as uncalibrated estimates.
+1. **Exposure Time Calculator** — Estimated time correction for yellow/magenta filtration and cyan as an exposure-only ND adjustment. Published Foma and Ilford grade settings are restricted to the available Meochrom head data; unsupported settings produce an error. The historical exposure-factor tables remain explicitly marked as uncalibrated estimates.
 2. **F-Stop Timer** — Timing tables in 1, 1/2, 1/3, 1/4, 1/6, 1/12 or 1/24-stop steps, with dry-down applied once. Clicking a time recenters the table without applying dry-down again. Increments describe cumulative test-strip exposures.
 3. **Enlarger Exposure** — Magnification correction using the actual negative image width, including crops. Switching inches/centimetres converts existing dimensions. Keep the aperture and filtration unchanged.
 4. **Print Placement** — Optical or geometric placement with optional image preview. Measurements retain precision through unit changes and saved settings. Offsets that move the print outside the mount are rejected.

@@ -4,12 +4,14 @@ The calculators distinguish algebraic conversions, manufacturer reference data a
 
 ## Exposure and filters
 
-The exposure-factor ratio is `t₂ = t₁ × (Y₂/Y₁) × (M₂/M₁)`, where Y and M are interpolated exposure multipliers, not dial numbers. This assumes separable filter attenuation. It is an estimate for variable-contrast paper: changing spectral response and contrast cannot preserve every print tone with a single time adjustment.
+The exposure-factor ratio is `t₂ = t₁ × (Y₂/Y₁) × (M₂/M₁) × (C₂/C₁)`, where Y, M and C are interpolated exposure multipliers, not dial numbers. This assumes separable filter attenuation. It is an estimate for variable-contrast paper: changing spectral response and contrast cannot preserve every print tone with a single time adjustment.
+
+Cyan uses the third column of the inherited factor tables as an ND-style, exposure-only correction. Cyan changes do not alter the selected contrast grade, and choosing a grade preserves cyan. This is a model assumption requiring a test strip for your setup. Existing saved settings without cyan default to zero.
 
 Grade settings come from:
 
 - [Foma Fomaspeed Variant](https://www.foma.cz/en/fomaspeed-variant): Meopta whole grades 0–5. Unsupported intermediate grades from the earlier app were removed.
-- [Ilford contrast control](https://www.ilfordphoto.com/wp/wp-content/uploads/2017/03/Contrast-control-for-Ilford-Multigrade.pdf): Meopta grades 00–4½, including half grades. The table specifies 200M for 4½ and does not specify a grade-5 setting.
+- [Ilford contrast control](https://www.ilfordphoto.com/wp/wp-content/uploads/2017/03/Contrast-control-for-Ilford-Multigrade.pdf): the Meopta column of the single-filter table, grades 00–4½, including half grades. The table specifies 200M for 4½ and does not specify a grade-5 setting. This table supplies contrast-grade dial settings; it supplies neither exposure multipliers nor cyan ND calibration.
 
 The **exposure-factor tables** were inherited without an identifiable measurement source, paper type or test conditions. They are retained as explicitly labelled estimates, not attributed to either manufacturer. Supported data ranges are 0–150 for Meochrom 1 and 0–180 for Meochrom 2. These are limits of the stored data, not a certification of every physical head's dial range. No clamping or extrapolation is performed. Grade settings beyond a head's data range are disabled.
 

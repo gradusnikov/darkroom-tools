@@ -1025,6 +1025,8 @@
                         <label for="exp-existingFilterGrade">Filter grade</label>
                         <select id="exp-existingFilterGrade"></select>
                     </div>
+                </div>
+                <div class="input-row">
                     <div class="input-group">
                         <label for="exp-existingY">Yellow</label>
                         <input type="number" id="exp-existingY" value="0" min="0">
@@ -1032,6 +1034,10 @@
                     <div class="input-group">
                         <label for="exp-existingM">Magenta</label>
                         <input type="number" id="exp-existingM" value="0" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="exp-existingC">Cyan (ND)</label>
+                        <input type="number" id="exp-existingC" value="0" min="0">
                     </div>
                 </div>
                 <div class="input-row">
@@ -1049,6 +1055,8 @@
                         <label for="exp-updatedFilterGrade">Filter grade</label>
                         <select id="exp-updatedFilterGrade"></select>
                     </div>
+                </div>
+                <div class="input-row">
                     <div class="input-group">
                         <label for="exp-updatedY">Yellow</label>
                         <input type="number" id="exp-updatedY" value="0" min="0">
@@ -1056,6 +1064,10 @@
                     <div class="input-group">
                         <label for="exp-updatedM">Magenta</label>
                         <input type="number" id="exp-updatedM" value="0" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="exp-updatedC">Cyan (ND)</label>
+                        <input type="number" id="exp-updatedC" value="0" min="0">
                     </div>
                 </div>
             </div>
@@ -1070,7 +1082,7 @@
                 </div>
             </div>
 
-            <p class="instruction-note">Exposure factors are legacy estimates without a confirmed calibration source. Test at the final grade. Settings outside the available head data are unsupported. <a id="exp-source" href="https://www.foma.cz/en/fomaspeed-variant" target="_blank" rel="noopener">Paper filtration reference</a></p>
+            <p class="instruction-note">Cyan is treated as an exposure-only ND correction. Exposure factors are legacy estimates without a confirmed calibration source. Test at the final grade. Settings outside the available head data are unsupported. <a id="exp-source" href="https://www.foma.cz/en/fomaspeed-variant" target="_blank" rel="noopener">Paper filtration reference</a></p>
             <p id="exp-error" class="result-note" role="status" aria-live="polite"></p>
             <div class="result-section" id="exp-result-section">
                 <div class="section-label">Corrected Exposure</div>
